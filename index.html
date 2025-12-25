@@ -68,14 +68,14 @@
       }
 
       #audio-message {
-        background-color: rgba(255, 255, 255, 0.9);
+        background-color: rgba(255, 255, 255, 0.95);
         color: #333;
         padding: 30px;
         border-radius: 15px;
         text-align: center;
         font-size: 18px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        max-width: 400px;
+        max-width: 500px;
       }
 
       #audio-message h2 {
@@ -87,6 +87,58 @@
         margin-bottom: 20px;
       }
 
+      .song-selection {
+        margin: 20px 0;
+        text-align: left;
+      }
+
+      .song-option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        margin: 8px 0;
+        background-color: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 16px;
+      }
+
+      .song-option:hover {
+        background-color: #e3f2fd;
+        border-color: #2196f3;
+      }
+
+      .song-option.selected {
+        background-color: #2196f3;
+        color: white;
+        border-color: #1976d2;
+      }
+
+      .song-option.selected:hover {
+        background-color: #1976d2;
+      }
+
+      .song-info {
+        flex-grow: 1;
+      }
+
+      .song-name {
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .song-description {
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      .song-option.selected .song-description {
+        opacity: 0.9;
+      }
+
       #enable-audio-btn {
         background-color: #ff6b35;
         color: white;
@@ -96,6 +148,7 @@
         font-size: 16px;
         cursor: pointer;
         transition: background-color 0.3s ease;
+        margin-top: 20px;
       }
 
       #enable-audio-btn:hover {
@@ -225,12 +278,36 @@
       <!-- Audio Enable Overlay -->
       <div id="audio-overlay">
         <div id="audio-message">
-          <h2>🎵 Enable Audio</h2>
+          <h2>🎵 Choose Your Soundtrack</h2>
           <p>
-            Click anywhere or tap the button below to enable sound effects and
-            background music!
+            Select your favorite background music and enable sound effects for
+            the best gaming experience!
           </p>
-          <button id="enable-audio-btn">🎶 Enable Sound</button>
+
+          <div class="song-selection">
+            <div class="song-option selected" data-index="0">
+              <div class="song-info">
+                <div class="song-name">🎭 Game of Thrones</div>
+                <div class="song-description">Epic orchestral soundtrack</div>
+              </div>
+            </div>
+
+            <div class="song-option" data-index="1">
+              <div class="song-info">
+                <div class="song-name">🍄 Super Mario</div>
+                <div class="song-description">Classic 8-bit adventure</div>
+              </div>
+            </div>
+
+            <div class="song-option" data-index="2">
+              <div class="song-info">
+                <div class="song-name">🎄 Carol of the Bells</div>
+                <div class="song-description">Festive holiday melody</div>
+              </div>
+            </div>
+          </div>
+
+          <button id="enable-audio-btn">🎶 Start Game with Sound</button>
         </div>
       </div>
 
@@ -248,17 +325,40 @@
       // Audio system
       let audioContext;
       let backgroundMusic;
-      let gameOfThronesAudio;
+      let currentAudio = null;
+
+      // Available soundtracks
+      const soundtracks = [
+        {
+          name: "Game of Thrones",
+          file: "game-of-thrones-soundtrack.mp3",
+          description: "Epic orchestral soundtrack",
+        },
+        {
+          name: "Super Mario",
+          file: "super-mario-soundtrack.mp3",
+          description: "Classic 8-bit adventure",
+        },
+        {
+          name: "Carol of the Bells",
+          file: "carols-of-the-bells-soundtrack.mp3",
+          description: "Festive holiday melody",
+        },
+      ];
+
+      let selectedSongIndex = 0; // Default to first song
 
       // Initialize audio
       function initAudio() {
         try {
           audioContext = new (window.AudioContext ||
             window.webkitAudioContext)();
-          // Load Game of Thrones soundtrack
-          gameOfThronesAudio = new Audio("game-of-thrones-soundtrack.mp3");
-          gameOfThronesAudio.loop = true; // Loop the soundtrack
-          gameOfThronesAudio.volume = 0.3; // Set reasonable volume
+          // Initialize all audio files
+          soundtracks.forEach((track) => {
+            track.audio = new Audio(track.file);
+            track.audio.loop = true;
+            track.audio.volume = 0.3;
+          });
         } catch (e) {
           console.log("Web Audio API not supported");
         }
@@ -337,15 +437,27 @@
         setTimeout(() => playBeep(200, 0.5, "sawtooth"), 200);
       }
 
-      // Background music - now plays Game of Thrones soundtrack
+      // Background music - plays selected soundtrack
       function startBackgroundMusic() {
-        if (gameOfThronesAudio) {
-          // Play the Game of Thrones soundtrack
-          gameOfThronesAudio.play().catch((e) => {
+        const selectedTrack = soundtracks[selectedSongIndex];
+        if (selectedTrack && selectedTrack.audio) {
+          // Stop any currently playing audio
+          stopBackgroundMusic();
+          // Play the selected soundtrack
+          currentAudio = selectedTrack.audio;
+          currentAudio.play().catch((e) => {
             console.log("Audio play failed:", e);
+            // Fallback to generated music if MP3 fails to load
+            fallbackToGeneratedMusic();
           });
-        } else if (audioContext && !backgroundMusic) {
-          // Fallback to generated music if MP3 fails to load
+        } else {
+          // Fallback to generated music
+          fallbackToGeneratedMusic();
+        }
+      }
+
+      function fallbackToGeneratedMusic() {
+        if (audioContext && !backgroundMusic) {
           let noteIndex = 0;
           const melody = [
             330, 330, 330, 262, 330, 392, 196, 262, 196, 165, 220, 247, 233,
@@ -366,15 +478,39 @@
       }
 
       function stopBackgroundMusic() {
-        // Stop Game of Thrones soundtrack
-        if (gameOfThronesAudio) {
-          gameOfThronesAudio.pause();
-          gameOfThronesAudio.currentTime = 0;
+        // Stop currently playing soundtrack
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+          currentAudio = null;
         }
         // Stop generated music fallback
         if (backgroundMusic) {
           clearInterval(backgroundMusic);
           backgroundMusic = null;
+        }
+      }
+
+      // Function to select a song
+      function selectSong(index) {
+        if (index >= 0 && index < soundtracks.length) {
+          selectedSongIndex = index;
+          // Update visual selection
+          updateSongSelection();
+        }
+      }
+
+      function updateSongSelection() {
+        // Remove selected class from all options
+        document.querySelectorAll(".song-option").forEach((option) => {
+          option.classList.remove("selected");
+        });
+        // Add selected class to current selection
+        const selectedOption = document.querySelector(
+          `.song-option[data-index="${selectedSongIndex}"]`
+        );
+        if (selectedOption) {
+          selectedOption.classList.add("selected");
         }
       }
 
@@ -882,26 +1018,45 @@
       function generatePlatforms() {
         // Only generate if Mario is approaching
         while (nextPlatformX < mario.x + CANVAS_WIDTH * 2) {
-          const platformType = Math.random();
           const x = nextPlatformX;
-          const y = 250 + Math.random() * 200; // Random height above ground
 
-          // Check if this platform should fly (10% chance for flying platforms)
-          const isFlying = Math.random() < 0.1;
+          // Calculate difficulty based on distance
+          const distanceTraveled = x;
+          const difficultyFactor = Math.min(distanceTraveled / 3000, 1); // 0 to 1
+
+          // Platform height gets more varied with distance
+          const heightVariation = 150 + difficultyFactor * 100; // 150 -> 250
+          const y = 250 + Math.random() * heightVariation;
+
+          // Flying platforms become more common (10% -> 30%)
+          const flyingChance = 0.1 + difficultyFactor * 0.2;
+          const isFlying = Math.random() < flyingChance;
+
+          // Flying platforms move faster and more erratically at higher difficulties
+          const flightSpeed = isFlying
+            ? 0.02 + Math.random() * 0.03 + difficultyFactor * 0.02
+            : 0;
+          const flightRadius = isFlying
+            ? 50 + Math.random() * 100 + difficultyFactor * 50
+            : 0;
+
+          const platformType = Math.random();
 
           // Increased spawn rates for more consistent blocks
           if (platformType < 0.35) {
             // Floating platform (35%)
+            // Platforms get smaller with distance (harder to land on)
+            const platformWidth = 180 - difficultyFactor * 60; // 180 -> 120
             platforms.push({
               x: x,
               y: y,
-              width: 80 + Math.random() * 100,
+              width: platformWidth,
               height: 20,
               type: "platform",
               flying: isFlying,
               flightAngle: isFlying ? Math.random() * Math.PI * 2 : 0,
-              flightRadius: isFlying ? 50 + Math.random() * 100 : 0,
-              flightSpeed: isFlying ? 0.02 + Math.random() * 0.03 : 0,
+              flightRadius: flightRadius,
+              flightSpeed: flightSpeed,
               originalY: isFlying ? y : 0,
             });
           } else if (platformType < 0.55) {
@@ -915,8 +1070,8 @@
               breakable: true,
               flying: isFlying,
               flightAngle: isFlying ? Math.random() * Math.PI * 2 : 0,
-              flightRadius: isFlying ? 30 + Math.random() * 60 : 0,
-              flightSpeed: isFlying ? 0.02 + Math.random() * 0.03 : 0,
+              flightRadius: flightRadius * 0.6,
+              flightSpeed: flightSpeed,
               originalY: isFlying ? y : 0,
             });
           } else if (platformType < 0.75) {
@@ -930,8 +1085,8 @@
               used: false,
               flying: isFlying,
               flightAngle: isFlying ? Math.random() * Math.PI * 2 : 0,
-              flightRadius: isFlying ? 30 + Math.random() * 60 : 0,
-              flightSpeed: isFlying ? 0.02 + Math.random() * 0.03 : 0,
+              flightRadius: flightRadius * 0.6,
+              flightSpeed: flightSpeed,
               originalY: isFlying ? y : 0,
             });
           } else if (platformType < 0.85) {
@@ -944,14 +1099,17 @@
               type: "pipe",
               flying: isFlying,
               flightAngle: isFlying ? Math.random() * Math.PI * 2 : 0,
-              flightRadius: isFlying ? 40 + Math.random() * 80 : 0,
-              flightSpeed: isFlying ? 0.02 + Math.random() * 0.03 : 0,
+              flightRadius: flightRadius * 0.8,
+              flightSpeed: flightSpeed,
               originalY: isFlying ? y : 0,
             });
           }
-          // 15% chance of nothing - reduced from 30%
+          // 15% chance of nothing - gaps get wider with difficulty
 
-          nextPlatformX += 120 + Math.random() * 180; // Closer spacing (120-300 pixels)
+          // Platform spacing increases with difficulty (gaps get wider)
+          const minGap = 120 + difficultyFactor * 30; // 120 -> 150
+          const gapVariation = 180 + difficultyFactor * 70; // 180 -> 250
+          nextPlatformX += minGap + Math.random() * gapVariation;
         }
       }
 
@@ -979,53 +1137,73 @@
       function generateEnemies() {
         // Only generate if Mario is approaching
         while (nextEnemyX < mario.x + CANVAS_WIDTH * 2) {
-          const enemyType = Math.random();
           const x = nextEnemyX;
 
-          if (enemyType < 0.35) {
-            // Goomba (35% chance)
+          // Calculate difficulty multiplier based on distance traveled
+          // Early game (0-1000): mostly easy enemies
+          // Mid game (1000-3000): mix of all enemies
+          // Late game (3000+): more dragons and harder enemies
+          const distanceTraveled = x;
+          const difficultyFactor = Math.min(distanceTraveled / 3000, 1); // 0 to 1
+
+          // Adjust spawn rates based on difficulty
+          // Early: 60% Goomba, 30% Koopa, 10% Dragon
+          // Late: 20% Goomba, 30% Koopa, 50% Dragon
+          const dragonChance = 0.1 + difficultyFactor * 0.4; // 10% -> 50%
+          const koopaChance = 0.3; // stays at 30%
+          const goombaChance = 0.6 - difficultyFactor * 0.4; // 60% -> 20%
+
+          const enemyType = Math.random();
+
+          if (enemyType < goombaChance) {
+            // Goomba - gets faster with distance
+            const speed = 1 + difficultyFactor * 0.5; // 1 -> 1.5
             enemies.push({
               x: x,
               y: GROUND_LEVEL - 32,
               width: 32,
               height: 32,
-              velocityX: Math.random() < 0.5 ? -1 : 1,
+              velocityX: Math.random() < 0.5 ? -speed : speed,
               type: "goomba",
               alive: true,
             });
-          } else if (enemyType < 0.65) {
-            // Koopa (30% chance)
+          } else if (enemyType < goombaChance + koopaChance) {
+            // Koopa - gets faster with distance
+            const speed = 1 + difficultyFactor * 0.8; // 1 -> 1.8
             enemies.push({
               x: x,
               y: GROUND_LEVEL - 32,
               width: 32,
               height: 32,
-              velocityX: Math.random() < 0.5 ? -1 : 1,
+              velocityX: Math.random() < 0.5 ? -speed : speed,
               type: "koopa",
               alive: true,
             });
           } else {
-            // Flying dragon with lava underneath
+            // Flying dragon with lava underneath - gets faster and more health
             const dragonY = 150 + Math.random() * 100;
+            const speed = 2 + difficultyFactor * 1; // 2 -> 3
+            const health = 2 + Math.floor(difficultyFactor * 2); // 2 -> 4
             enemies.push({
               x: x,
               y: dragonY,
               width: 48,
               height: 32,
-              velocityX: Math.random() < 0.5 ? -2 : 2,
+              velocityX: Math.random() < 0.5 ? -speed : speed,
               velocityY: 0,
               type: "dragon",
               alive: true,
-              health: 2,
+              health: health,
               flightTimer: 0,
               fireTimer: 0,
             });
 
-            // Add lava underneath the dragon
+            // Add lava underneath the dragon - gets wider with distance
+            const lavaWidth = 88 + difficultyFactor * 60; // 88 -> 148
             lavaHazards.push({
               x: x - 20,
               y: GROUND_LEVEL - 10,
-              width: 88, // Wider than dragon
+              width: lavaWidth,
               height: 20,
               type: "lava",
               damage: 1,
@@ -1033,7 +1211,9 @@
             });
           }
 
-          nextEnemyX += 150 + Math.random() * 200; // Even more frequent enemy spawning
+          // Enemy spawn rate increases with difficulty - enemies get closer together
+          const spawnGap = 250 - difficultyFactor * 100; // 250 -> 150
+          nextEnemyX += spawnGap + Math.random() * 150;
         }
       }
 
@@ -1376,6 +1556,18 @@
             enableAudio();
           });
         }
+
+        // Handle song selection
+        document.querySelectorAll(".song-option").forEach((option) => {
+          option.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering enableAudio
+            const index = parseInt(option.getAttribute("data-index"));
+            selectSong(index);
+          });
+        });
+
+        // Initialize song selection display
+        updateSongSelection();
       });
 
       // Update timer

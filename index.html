@@ -15,16 +15,21 @@
 
       #game-container {
         position: relative;
-        width: 800px;
-        height: 600px;
+        width: min(90vw, 800px);
+        height: min(75vh, 600px);
         margin: 20px auto;
         border: 3px solid #000;
         background: linear-gradient(to bottom, #5c94fc 0%, #87ceeb 100%);
+        max-width: 100%;
       }
 
       #game-canvas {
         display: block;
+        width: 100%;
+        height: 100%;
         background: linear-gradient(to bottom, #87ceeb 0%, #98fb98 100%);
+        max-width: 100%;
+        max-height: 100%;
       }
 
       #ui {
@@ -43,13 +48,15 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background-color: rgba(0, 0, 0, 0.8);
+        background-color: rgba(0, 0, 0, 0.9);
         color: white;
         padding: 20px;
         border-radius: 10px;
         text-align: center;
         display: none;
         z-index: 1000;
+        min-width: 250px;
+        max-width: 90vw;
       }
 
       /* Audio enable overlay */
@@ -400,7 +407,7 @@
         left: 0;
         right: 0;
         width: 100%;
-        display: flex;
+        display: none; /* Hidden by default, shown when game starts */
         justify-content: space-between;
         padding: 0 30px;
         z-index: 2000;
@@ -449,8 +456,57 @@
         border-radius: 20px;
       }
 
-      /* Make controls more visible on all devices */
+      /* Mobile responsiveness */
       @media (max-width: 767px) {
+        #game-container {
+          width: 95vw;
+          height: 70vh;
+          margin: 10px auto;
+          border-width: 2px;
+        }
+
+        #ui {
+          font-size: 14px;
+          top: 5px;
+          left: 5px;
+        }
+
+        #ui > div {
+          margin-bottom: 2px;
+        }
+
+        #difficulty-display {
+          font-size: 11px !important;
+        }
+
+        #boss-warning {
+          font-size: 14px;
+        }
+
+        #victory-message {
+          font-size: 16px;
+        }
+
+        #game-over {
+          padding: 15px;
+          min-width: 200px;
+        }
+
+        #game-over h2 {
+          font-size: 24px;
+          margin-bottom: 10px;
+        }
+
+        #game-over p {
+          font-size: 16px;
+          margin-bottom: 15px;
+        }
+
+        #game-over button {
+          padding: 12px 24px;
+          font-size: 16px;
+        }
+
         .touch-button {
           width: 100px;
           height: 100px;
@@ -461,6 +517,11 @@
           width: 120px;
           height: 120px;
           font-size: 24px;
+        }
+
+        #touch-controls {
+          bottom: 20px;
+          padding: 0 20px;
         }
 
         #audio-message {
@@ -502,6 +563,26 @@
         }
       }
 
+      /* Tablet responsiveness */
+      @media (max-width: 1024px) and (min-width: 768px) {
+        #game-container {
+          width: min(85vw, 800px);
+          height: min(70vh, 600px);
+        }
+
+        #ui {
+          font-size: 15px;
+        }
+      }
+
+      /* Small desktop screens */
+      @media (max-width: 1200px) and (min-width: 1025px) {
+        #game-container {
+          width: min(80vw, 800px);
+          height: min(65vh, 600px);
+        }
+      }
+
       button {
         background-color: #4caf50;
         border: none;
@@ -523,7 +604,7 @@
   </head>
   <body>
     <div id="game-container">
-      <canvas id="game-canvas" width="800" height="600"></canvas>
+      <canvas id="game-canvas"></canvas>
       <div id="ui">
         <div>Score: <span id="score">0</span></div>
         <div>Lives: <span id="lives">3</span></div>
@@ -933,13 +1014,13 @@
         }
       }
 
-      // Game constants
-      const CANVAS_WIDTH = 800;
-      const CANVAS_HEIGHT = 600;
+      // Game constants - will be set dynamically in init()
+      let CANVAS_WIDTH = 800;
+      let CANVAS_HEIGHT = 600;
       const GRAVITY = 0.5;
       const JUMP_FORCE = -12;
       const MOVE_SPEED = 5;
-      const GROUND_LEVEL = 500;
+      let GROUND_LEVEL = 500; // Will be updated in init() based on canvas height
 
       // Game variables
       let canvas, ctx;
@@ -1229,6 +1310,16 @@
         canvas = document.getElementById("game-canvas");
         ctx = canvas.getContext("2d");
 
+        // Set canvas dimensions dynamically for responsiveness
+        const container = document.getElementById("game-container");
+        CANVAS_WIDTH = container.clientWidth;
+        CANVAS_HEIGHT = container.clientHeight;
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+
+        // Set ground level based on canvas height
+        GROUND_LEVEL = CANVAS_HEIGHT - 100;
+
         // Initialize audio
         initAudio();
 
@@ -1239,6 +1330,23 @@
 
         document.addEventListener("keyup", (e) => {
           keys[e.code] = false;
+        });
+
+        // Handle window resize for responsive canvas
+        window.addEventListener("resize", () => {
+          const container = document.getElementById("game-container");
+          CANVAS_WIDTH = container.clientWidth;
+          CANVAS_HEIGHT = container.clientHeight;
+          canvas.width = CANVAS_WIDTH;
+          canvas.height = CANVAS_HEIGHT;
+
+          // Update ground level based on new canvas height
+          GROUND_LEVEL = CANVAS_HEIGHT - 100;
+
+          // Clear and redraw if game is running
+          if (gameRunning) {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+          }
         });
 
         // Touch controls for mobile/iPad
@@ -2251,6 +2359,12 @@
         playGameOverSound();
         document.getElementById("final-score").textContent = score;
         document.getElementById("game-over").style.display = "block";
+
+        // Hide touch controls when game over
+        const touchControls = document.getElementById("touch-controls");
+        if (touchControls) {
+          touchControls.style.display = "none";
+        }
       }
 
       // Restart game
@@ -2368,6 +2482,12 @@
           startBackgroundMusic();
           audioStarted = true;
           hideAudioOverlay();
+
+          // Show touch controls when game starts
+          const touchControls = document.getElementById("touch-controls");
+          if (touchControls) {
+            touchControls.style.display = "flex";
+          }
         }
       }
 

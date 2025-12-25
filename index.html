@@ -837,6 +837,12 @@
       // Enemies - will be populated based on difficulty
       let enemies = [];
 
+      // Bullet Bills (rockets)
+      let bulletBills = [];
+
+      // Bill Blasters (cannons that shoot Bullet Bills)
+      let billBlasters = [];
+
       // Initial enemies based on difficulty (called after game starts)
       function initializeEnemies() {
         const difficulty = getDifficulty();
@@ -1004,11 +1010,13 @@
         updateParticles();
         updateLava();
         updateObstacles(); // Update spikes and falling rocks
+        updateBulletBills(); // Update Bullet Bills
         generateGround(); // Generate infinite ground
         generatePlatforms(); // Procedural generation
         updateFlyingPlatforms(); // Update flying platform positions
         generateEnemies(); // Procedural generation
         generateObstacles(); // Generate spikes and rocks
+        generateBillBlasters(); // Generate Bill Blasters
         checkCollisions();
         render();
 
@@ -1189,6 +1197,7 @@
       let nextEnemyX = 1800;
       let nextGroundX = 800; // Start extending ground
       let nextObstacleX = 500; // Start generating obstacles early
+      let nextBlasterX = 600; // Start generating Bill Blasters early
 
       // Generate infinite ground
       function generateGround() {
@@ -1622,6 +1631,145 @@
         }
       }
 
+      // Generate Bill Blasters (cannons) as Mario progresses
+      function generateBillBlasters() {
+        const difficulty = getDifficulty();
+
+        // Easy difficulty has no rockets at all
+        if (selectedDifficulty === "easy") {
+          return;
+        }
+
+        // Only generate if Mario is approaching
+        while (nextBlasterX < mario.x + CANVAS_WIDTH * 2) {
+          const x = nextBlasterX;
+
+          // Calculate difficulty based on distance
+          const distanceTraveled = x;
+          const distanceFactor = Math.min(distanceTraveled / 3000, 1); // 0 to 1
+
+          // Blaster spawn rate based on difficulty
+          let baseSpawnChance;
+          if (selectedDifficulty === "medium") {
+            // Medium: Very low spawn rate, increases slowly
+            baseSpawnChance = 0.05 + distanceFactor * 0.05; // 5% -> 10%
+          } else {
+            // Hard: Low spawn rate, increases moderately
+            baseSpawnChance = 0.08 + distanceFactor * 0.08; // 8% -> 16%
+          }
+
+          if (Math.random() < baseSpawnChance) {
+            // Random placement - can be on ground or elevated
+            const placementType = Math.random();
+            let y, height;
+
+            if (placementType < 0.5) {
+              // Ground-level blaster
+              y = GROUND_LEVEL - 48;
+              height = 48;
+            } else if (placementType < 0.8) {
+              // Mid-height blaster
+              y = GROUND_LEVEL - 200;
+              height = 48;
+            } else {
+              // High blaster
+              y = 150;
+              height = 48;
+            }
+
+            // Add Bill Blaster
+            billBlasters.push({
+              x: x,
+              y: y,
+              width: 48,
+              height: height,
+              type: "blaster",
+              shootTimer: Math.random() * 120 + 60, // Shoot every 60-180 frames
+              shootCooldown:
+                selectedDifficulty === "medium"
+                  ? 300 - distanceFactor * 30
+                  : 180 - distanceFactor * 30, // Medium shoots much slower, Hard shoots slower
+            });
+          }
+
+          // Spacing between potential blaster spawns (larger gaps to reduce frequency)
+          const baseSpacing = selectedDifficulty === "medium" ? 600 : 450;
+          const spacingVariation = selectedDifficulty === "medium" ? 800 : 600;
+          nextBlasterX += baseSpacing + Math.random() * spacingVariation;
+        }
+      }
+
+      // Update Bullet Bills
+      function updateBulletBills() {
+        const cameraLeft = cameraX - CANVAS_WIDTH;
+        const cameraRight = cameraX + CANVAS_WIDTH * 3;
+        const difficulty = getDifficulty();
+
+        // Update existing Bullet Bills
+        for (let i = bulletBills.length - 1; i >= 0; i--) {
+          const bullet = bulletBills[i];
+
+          // Move Bullet Bill
+          bullet.x += bullet.velocityX;
+
+          // Remove if off-screen
+          if (bullet.x < cameraLeft || bullet.x > cameraRight) {
+            bulletBills.splice(i, 1);
+            continue;
+          }
+        }
+
+        // Update Bill Blasters and spawn new Bullet Bills
+        for (let i = billBlasters.length - 1; i >= 0; i--) {
+          const blaster = billBlasters[i];
+
+          // Remove blasters that are too far off-screen
+          if (
+            blaster.x + blaster.width < cameraLeft ||
+            blaster.x > cameraRight
+          ) {
+            billBlasters.splice(i, 1);
+            continue;
+          }
+
+          // Update shoot timer
+          blaster.shootTimer--;
+
+          // Spawn Bullet Bill when timer reaches 0
+          if (blaster.shootTimer <= 0 && blaster.x < mario.x + CANVAS_WIDTH) {
+            // Only shoot if on screen or close to it
+            const distanceTraveled = blaster.x;
+            const distanceFactor = Math.min(distanceTraveled / 3000, 1);
+
+            // Determine direction - shoot towards Mario's general direction
+            const shootLeft = blaster.x > mario.x;
+            // Adjust speed based on difficulty - medium is slower than base
+            let speedMultiplier = difficulty.enemySpeedMultiplier;
+            if (selectedDifficulty === "medium") {
+              speedMultiplier *= 0.8; // Medium rockets are 20% slower
+            }
+            const speed = (4 + distanceFactor * 2) * speedMultiplier;
+
+            // Create Bullet Bill
+            bulletBills.push({
+              x: blaster.x + (shootLeft ? -32 : blaster.width),
+              y: blaster.y + blaster.height / 2 - 16, // Center on blaster
+              width: 32,
+              height: 32,
+              velocityX: shootLeft ? -speed : speed,
+              type: "bullet",
+              alive: true,
+            });
+
+            // Play shoot sound
+            playBeep(200, 0.1, "square");
+
+            // Reset timer
+            blaster.shootTimer = blaster.shootCooldown;
+          }
+        }
+      }
+
       // Check collisions
       function checkCollisions() {
         // Mario vs enemies
@@ -1742,6 +1890,53 @@
                 color: Math.random() < 0.5 ? "#8B4513" : "#A0522D",
                 size: 4 + Math.random() * 4,
               });
+            }
+          }
+        }
+
+        // Mario vs Bullet Bills
+        for (let i = bulletBills.length - 1; i >= 0; i--) {
+          const bullet = bulletBills[i];
+          if (bullet.alive && checkCollision(mario, bullet)) {
+            // Check if Mario jumped on the Bullet Bill
+            if (mario.velocityY > 0 && mario.y < bullet.y) {
+              // Defeated Bullet Bill by jumping on it
+              bullet.alive = false;
+              bulletBills.splice(i, 1);
+              mario.velocityY = JUMP_FORCE * 0.5; // Small bounce
+              score += 200; // More points for defeating Bullet Bill
+              playEnemyDefeatSound();
+
+              // Add explosion particles
+              for (let j = 0; j < 10; j++) {
+                particles.push({
+                  x: bullet.x + bullet.width / 2,
+                  y: bullet.y + bullet.height / 2,
+                  velocityX: (Math.random() - 0.5) * 6,
+                  velocityY: (Math.random() - 0.5) * 6,
+                  life: 30,
+                  color: Math.random() < 0.5 ? "#FF4500" : "#FFD700",
+                  size: 4 + Math.random() * 4,
+                });
+              }
+            } else {
+              // Hit by Bullet Bill
+              loseLife();
+              bullet.alive = false;
+              bulletBills.splice(i, 1);
+
+              // Add explosion particles
+              for (let j = 0; j < 8; j++) {
+                particles.push({
+                  x: bullet.x + bullet.width / 2,
+                  y: bullet.y + bullet.height / 2,
+                  velocityX: (Math.random() - 0.5) * 5,
+                  velocityY: (Math.random() - 0.5) * 5,
+                  life: 25,
+                  color: "#FF0000",
+                  size: 3 + Math.random() * 3,
+                });
+              }
             }
           }
         }
@@ -1915,6 +2110,8 @@
           initializeEnemies();
           // Initialize initial obstacles
           initializeObstacles();
+          // Initialize Bill Blasters
+          initializeBillBlasters();
           startBackgroundMusic();
           audioStarted = true;
           hideAudioOverlay();
@@ -1956,6 +2153,43 @@
         const diffDisplay = document.getElementById("current-difficulty");
         if (diffDisplay) {
           diffDisplay.textContent = difficultyLabels[selectedDifficulty];
+        }
+      }
+
+      // Initialize Bill Blasters based on difficulty
+      function initializeBillBlasters() {
+        const difficulty = getDifficulty();
+        billBlasters = [];
+        bulletBills = [];
+
+        // Add initial Bill Blasters based on difficulty
+        const blasterPositions = [
+          { x: 850, y: GROUND_LEVEL - 200 },
+          { x: 1100, y: 200 },
+        ];
+
+        // Spawn initial blasters based on difficulty
+        // Easy: No rockets at all
+        // Medium: 0 initial blasters (reduced from 1)
+        // Hard: 1 initial blaster (reduced from 2)
+        const blasterCount =
+          selectedDifficulty === "easy"
+            ? 0
+            : selectedDifficulty === "medium"
+            ? 0
+            : 1;
+
+        for (let i = 0; i < blasterCount; i++) {
+          const pos = blasterPositions[i];
+          billBlasters.push({
+            x: pos.x,
+            y: pos.y,
+            width: 48,
+            height: 48,
+            type: "blaster",
+            shootTimer: 120 + Math.random() * 60,
+            shootCooldown: selectedDifficulty === "hard" ? 180 : 300,
+          });
         }
       }
 
@@ -2107,6 +2341,18 @@
         // Draw falling rocks
         fallingRocks.forEach((rock) => {
           drawFallingRock(rock);
+        });
+
+        // Draw Bill Blasters (cannons)
+        billBlasters.forEach((blaster) => {
+          drawBillBlaster(blaster);
+        });
+
+        // Draw Bullet Bills
+        bulletBills.forEach((bullet) => {
+          if (bullet.alive) {
+            drawBulletBill(bullet);
+          }
         });
 
         // Draw particles
@@ -2638,6 +2884,158 @@
           ctx.font = "bold 16px Arial";
           ctx.textAlign = "center";
           ctx.fillText("⚠", rock.x + rock.width / 2, 30);
+        }
+      }
+
+      // Draw Bill Blaster (cannon)
+      function drawBillBlaster(blaster) {
+        // Main cannon body - dark gray/black
+        ctx.fillStyle = "#2F2F2F";
+        ctx.fillRect(blaster.x, blaster.y, blaster.width, blaster.height);
+
+        // Cannon barrel - lighter gray
+        ctx.fillStyle = "#4A4A4A";
+        ctx.fillRect(
+          blaster.x + 8,
+          blaster.y,
+          blaster.width - 16,
+          blaster.height / 2
+        );
+
+        // Cannon opening - black circle
+        ctx.fillStyle = "#000000";
+        const openingY = blaster.y + blaster.height / 4;
+        ctx.fillRect(
+          blaster.x + blaster.width / 4,
+          openingY,
+          blaster.width / 2,
+          blaster.height / 4
+        );
+
+        // Highlight on cannon
+        ctx.fillStyle = "#6A6A6A";
+        ctx.fillRect(blaster.x + 4, blaster.y + 4, 8, blaster.height / 3);
+
+        // Base/stand
+        ctx.fillStyle = "#1F1F1F";
+        ctx.fillRect(
+          blaster.x,
+          blaster.y + blaster.height - 8,
+          blaster.width,
+          8
+        );
+
+        // Metallic rivets
+        ctx.fillStyle = "#808080";
+        for (let i = 0; i < 3; i++) {
+          ctx.fillRect(
+            blaster.x + 10 + i * 12,
+            blaster.y + blaster.height / 2,
+            4,
+            4
+          );
+        }
+
+        // Skull icon (classic Bill Blaster design)
+        ctx.fillStyle = "#FFFFFF";
+        const skullX = blaster.x + blaster.width / 2 - 6;
+        const skullY = blaster.y + blaster.height - 20;
+        // Simple skull shape
+        ctx.fillRect(skullX, skullY, 12, 8);
+        // Eyes
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(skullX + 2, skullY + 2, 3, 3);
+        ctx.fillRect(skullX + 7, skullY + 2, 3, 3);
+      }
+
+      // Draw Bullet Bill (rocket)
+      function drawBulletBill(bullet) {
+        const facingLeft = bullet.velocityX < 0;
+
+        // Main body - black bullet shape
+        ctx.fillStyle = "#000000";
+        if (facingLeft) {
+          // Bullet facing left
+          ctx.fillRect(bullet.x + 8, bullet.y + 4, 24, 24);
+          // Pointed nose
+          ctx.fillRect(bullet.x, bullet.y + 12, 8, 8);
+        } else {
+          // Bullet facing right
+          ctx.fillRect(bullet.x, bullet.y + 4, 24, 24);
+          // Pointed nose
+          ctx.fillRect(bullet.x + 24, bullet.y + 12, 8, 8);
+        }
+
+        // Arms (extending from sides)
+        ctx.fillStyle = "#1A1A1A";
+        if (facingLeft) {
+          ctx.fillRect(bullet.x + 12, bullet.y, 8, 4); // Top arm
+          ctx.fillRect(bullet.x + 12, bullet.y + 28, 8, 4); // Bottom arm
+        } else {
+          ctx.fillRect(bullet.x + 12, bullet.y, 8, 4); // Top arm
+          ctx.fillRect(bullet.x + 12, bullet.y + 28, 8, 4); // Bottom arm
+        }
+
+        // Eyes - angry white eyes
+        ctx.fillStyle = "#FFFFFF";
+        if (facingLeft) {
+          ctx.fillRect(bullet.x + 10, bullet.y + 10, 6, 4);
+          ctx.fillRect(bullet.x + 10, bullet.y + 18, 6, 4);
+        } else {
+          ctx.fillRect(bullet.x + 16, bullet.y + 10, 6, 4);
+          ctx.fillRect(bullet.x + 16, bullet.y + 18, 6, 4);
+        }
+
+        // Pupils - black dots
+        ctx.fillStyle = "#000000";
+        if (facingLeft) {
+          ctx.fillRect(bullet.x + 11, bullet.y + 11, 2, 2);
+          ctx.fillRect(bullet.x + 11, bullet.y + 19, 2, 2);
+        } else {
+          ctx.fillRect(bullet.x + 19, bullet.y + 11, 2, 2);
+          ctx.fillRect(bullet.x + 19, bullet.y + 19, 2, 2);
+        }
+
+        // Mouth/grimace
+        ctx.fillStyle = "#FFFFFF";
+        if (facingLeft) {
+          ctx.fillRect(bullet.x + 8, bullet.y + 14, 6, 4);
+        } else {
+          ctx.fillRect(bullet.x + 18, bullet.y + 14, 6, 4);
+        }
+
+        // Exhaust flame effect at back
+        const time = Date.now() * 0.02;
+        const flameSize = 4 + Math.sin(time) * 2;
+        ctx.fillStyle = "#FF4500";
+        if (facingLeft) {
+          ctx.fillRect(
+            bullet.x + 28,
+            bullet.y + 14 - flameSize / 2,
+            flameSize,
+            flameSize
+          );
+          ctx.fillStyle = "#FFD700";
+          ctx.fillRect(
+            bullet.x + 30,
+            bullet.y + 15 - flameSize / 4,
+            flameSize / 2,
+            flameSize / 2
+          );
+        } else {
+          ctx.fillRect(
+            bullet.x - flameSize,
+            bullet.y + 14 - flameSize / 2,
+            flameSize,
+            flameSize
+          );
+          ctx.fillStyle = "#FFD700";
+          ctx.fillRect(
+            bullet.x - flameSize / 2,
+            bullet.y + 15 - flameSize / 4,
+            flameSize / 2,
+            flameSize / 2
+          );
         }
       }
 

@@ -1,4 +1,4 @@
 - add rockets from the original game.
 - add bowser's castle.
-- Add multiple levels, easy medium hard
--
+- add selection of multiple characters (Mario, Luigi, Peach, Toad, Bowser) at the starting screen.
+- your score accumlates and you can use it to unlock new characters.

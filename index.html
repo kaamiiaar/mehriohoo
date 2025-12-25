@@ -1320,6 +1320,12 @@
         // Set ground level based on canvas height
         GROUND_LEVEL = CANVAS_HEIGHT - 100;
 
+        // Update Mario's initial position based on new ground level
+        mario.y = GROUND_LEVEL - 32;
+
+        // Update initial ground platform position
+        platforms[0].y = GROUND_LEVEL;
+
         // Initialize audio
         initAudio();
 
@@ -1342,6 +1348,18 @@
 
           // Update ground level based on new canvas height
           GROUND_LEVEL = CANVAS_HEIGHT - 100;
+
+          // Update Mario's position based on new ground level
+          if (!gameRunning) {
+            mario.y = GROUND_LEVEL - 32;
+            // Update initial ground platform position
+            platforms[0].y = GROUND_LEVEL;
+          } else {
+            // If game is running, ensure Mario doesn't fall through the ground
+            if (mario.y + mario.height > GROUND_LEVEL) {
+              mario.y = GROUND_LEVEL - mario.height;
+            }
+          }
 
           // Clear and redraw if game is running
           if (gameRunning) {

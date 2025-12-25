@@ -139,6 +139,78 @@
         opacity: 0.9;
       }
 
+      /* Difficulty Selection */
+      .difficulty-selection {
+        margin: 20px 0;
+      }
+
+      .difficulty-label {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .difficulty-options {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .difficulty-btn {
+        padding: 12px 24px;
+        border: 3px solid #ddd;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: linear-gradient(to bottom, #fff 0%, #f0f0f0 100%);
+      }
+
+      .difficulty-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .difficulty-btn.easy {
+        border-color: #4caf50;
+        color: #4caf50;
+      }
+
+      .difficulty-btn.easy.selected {
+        background: linear-gradient(to bottom, #66bb6a 0%, #4caf50 100%);
+        color: white;
+        border-color: #388e3c;
+      }
+
+      .difficulty-btn.medium {
+        border-color: #ff9800;
+        color: #ff9800;
+      }
+
+      .difficulty-btn.medium.selected {
+        background: linear-gradient(to bottom, #ffb74d 0%, #ff9800 100%);
+        color: white;
+        border-color: #f57c00;
+      }
+
+      .difficulty-btn.hard {
+        border-color: #f44336;
+        color: #f44336;
+      }
+
+      .difficulty-btn.hard.selected {
+        background: linear-gradient(to bottom, #ef5350 0%, #f44336 100%);
+        color: white;
+        border-color: #d32f2f;
+      }
+
+      .difficulty-info {
+        font-size: 12px;
+        color: #666;
+        margin-top: 8px;
+      }
+
       #enable-audio-btn {
         background-color: #ff6b35;
         color: white;
@@ -252,6 +324,9 @@
         <div>Score: <span id="score">0</span></div>
         <div>Lives: <span id="lives">3</span></div>
         <div>Time: <span id="time">400</span></div>
+        <div id="difficulty-display" style="font-size: 12px; opacity: 0.8">
+          Difficulty: <span id="current-difficulty">Easy</span>
+        </div>
         <div
           id="boss-warning"
           style="display: none; color: red; font-weight: bold"
@@ -301,9 +376,34 @@
 
             <div class="song-option" data-index="2">
               <div class="song-info">
-                <div class="song-name">🎄 Carol of the Bells</div>
-                <div class="song-description">Festive holiday melody</div>
+                <div class="song-name">🕵️ James Bond</div>
+                <div class="song-description">Classic spy thriller theme</div>
               </div>
+            </div>
+
+            <div class="song-option" data-index="3">
+              <div class="song-info">
+                <div class="song-name">🎬 Mission Impossible</div>
+                <div class="song-description">High-stakes action music</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="difficulty-selection">
+            <div class="difficulty-label">⚔️ Select Difficulty</div>
+            <div class="difficulty-options">
+              <div class="difficulty-btn easy selected" data-difficulty="easy">
+                🌱 Easy
+              </div>
+              <div class="difficulty-btn medium" data-difficulty="medium">
+                ⚡ Medium
+              </div>
+              <div class="difficulty-btn hard" data-difficulty="hard">
+                🔥 Hard
+              </div>
+            </div>
+            <div class="difficulty-info" id="difficulty-info">
+              Fewer enemies, slower speed, less obstacles
             </div>
           </div>
 
@@ -340,13 +440,67 @@
           description: "Classic 8-bit adventure",
         },
         {
-          name: "Carol of the Bells",
-          file: "carols-of-the-bells-soundtrack.mp3",
-          description: "Festive holiday melody",
+          name: "James Bond",
+          file: "james-bond-soundtrack.mp3",
+          description: "Classic spy thriller theme",
+        },
+        {
+          name: "Mission Impossible",
+          file: "mission-impossible-soundtrack.mp3",
+          description: "High-stakes action music",
         },
       ];
 
       let selectedSongIndex = 0; // Default to first song
+      let selectedDifficulty = "easy"; // Default difficulty
+
+      // Difficulty configurations
+      const difficultyConfig = {
+        easy: {
+          enemySpawnRate: 0.6, // Fewer enemies
+          enemySpeedMultiplier: 0.7, // Slower enemies
+          dragonChanceBase: 0.05, // Less dragons
+          dragonChanceMax: 0.25,
+          spikeSpawnRate: 0.1, // Few spikes
+          rockSpawnRate: 0.05, // Rare falling rocks
+          lavaWidth: 48, // Smaller lava
+          spawnGapBase: 350, // More space between enemies
+          spawnGapReduction: 80,
+          initialEnemyCount: 3,
+          description: "Fewer enemies, slower speed, less obstacles",
+        },
+        medium: {
+          enemySpawnRate: 1.0,
+          enemySpeedMultiplier: 1.0,
+          dragonChanceBase: 0.1,
+          dragonChanceMax: 0.4,
+          spikeSpawnRate: 0.2,
+          rockSpawnRate: 0.1,
+          lavaWidth: 64,
+          spawnGapBase: 250,
+          spawnGapReduction: 100,
+          initialEnemyCount: 6,
+          description: "Balanced challenge with moderate obstacles",
+        },
+        hard: {
+          enemySpawnRate: 1.5, // More enemies
+          enemySpeedMultiplier: 1.4, // Faster enemies
+          dragonChanceBase: 0.2, // More dragons
+          dragonChanceMax: 0.6,
+          spikeSpawnRate: 0.35, // Many spikes
+          rockSpawnRate: 0.2, // Frequent falling rocks
+          lavaWidth: 96, // Larger lava
+          spawnGapBase: 150, // Enemies close together
+          spawnGapReduction: 50,
+          initialEnemyCount: 10,
+          description: "Many enemies, fast pace, dangerous obstacles",
+        },
+      };
+
+      // Get current difficulty settings
+      function getDifficulty() {
+        return difficultyConfig[selectedDifficulty];
+      }
 
       // Initialize audio
       function initAudio() {
@@ -435,6 +589,18 @@
         playBeep(100, 0.3, "sawtooth");
         setTimeout(() => playBeep(150, 0.3, "sawtooth"), 100);
         setTimeout(() => playBeep(200, 0.5, "sawtooth"), 200);
+      }
+
+      // Play spike hit sound
+      function playSpikeSound() {
+        playBeep(150, 0.15, "sawtooth");
+        setTimeout(() => playBeep(100, 0.2, "sawtooth"), 50);
+      }
+
+      // Play falling rock warning sound
+      function playRockWarningSound() {
+        playBeep(300, 0.1);
+        setTimeout(() => playBeep(350, 0.1), 100);
       }
 
       // Background music - plays selected soundtrack
@@ -668,92 +834,103 @@
         { x: 700, y: 468, width: 64, height: 32, type: "pipe" },
       ];
 
-      // Enemies
-      let enemies = [
-        {
-          x: 400,
-          y: GROUND_LEVEL - 32,
-          width: 32,
-          height: 32,
-          velocityX: -1,
-          type: "goomba",
-          alive: true,
-        },
-        {
-          x: 600,
-          y: GROUND_LEVEL - 32,
-          width: 32,
-          height: 32,
-          velocityX: -1,
-          type: "goomba",
-          alive: true,
-        },
-        {
-          x: 750,
-          y: GROUND_LEVEL - 32,
-          width: 32,
-          height: 32,
-          velocityX: -1,
-          type: "koopa",
-          alive: true,
-        },
-        // More challenging enemies
-        {
-          x: 900,
-          y: GROUND_LEVEL - 32,
-          width: 32,
-          height: 32,
-          velocityX: -1,
-          type: "goomba",
-          alive: true,
-        },
-        {
-          x: 1100,
-          y: GROUND_LEVEL - 32,
-          width: 32,
-          height: 32,
-          velocityX: 1,
-          type: "koopa",
-          alive: true,
-        },
-        {
-          x: 1250,
-          y: GROUND_LEVEL - 32,
-          width: 32,
-          height: 32,
-          velocityX: -1,
-          type: "goomba",
-          alive: true,
-        },
-        // Dragon enemy - flying obstacle (moved closer so it's visible)
-        {
-          x: 550, // Moved closer so it's visible earlier in the level
-          y: 200,
-          width: 48,
-          height: 32,
-          velocityX: 2,
-          velocityY: 0,
-          type: "dragon",
-          alive: true,
-          health: 2, // Dragon takes 2 hits
-          flightTimer: 0,
-          fireTimer: 0,
-        },
+      // Enemies - will be populated based on difficulty
+      let enemies = [];
 
-        // Boss enemy - starts off-screen and enters when Mario approaches
-        {
-          x: 1600, // Start even further off-screen
+      // Initial enemies based on difficulty (called after game starts)
+      function initializeEnemies() {
+        const difficulty = getDifficulty();
+        enemies = [];
+
+        // Base enemies - always present
+        const baseEnemies = [
+          { x: 400, type: "goomba" },
+          { x: 600, type: "goomba" },
+          { x: 750, type: "koopa" },
+        ];
+
+        // Additional enemies based on difficulty
+        const additionalEnemies = [
+          { x: 900, type: "goomba" },
+          { x: 1000, type: "koopa" },
+          { x: 1100, type: "goomba" },
+          { x: 1200, type: "koopa" },
+          { x: 1300, type: "goomba" },
+          { x: 1400, type: "koopa" },
+          { x: 1500, type: "goomba" },
+        ];
+
+        // Spawn base enemies
+        baseEnemies.forEach((e) => {
+          const speed = 1 * difficulty.enemySpeedMultiplier;
+          enemies.push({
+            x: e.x,
+            y: GROUND_LEVEL - 32,
+            width: 32,
+            height: 32,
+            velocityX: Math.random() < 0.5 ? -speed : speed,
+            type: e.type,
+            alive: true,
+          });
+        });
+
+        // Spawn additional enemies based on difficulty count
+        const extraCount = difficulty.initialEnemyCount - baseEnemies.length;
+        for (
+          let i = 0;
+          i < Math.max(0, extraCount) && i < additionalEnemies.length;
+          i++
+        ) {
+          const e = additionalEnemies[i];
+          const speed = 1 * difficulty.enemySpeedMultiplier;
+          enemies.push({
+            x: e.x,
+            y: GROUND_LEVEL - 32,
+            width: 32,
+            height: 32,
+            velocityX: Math.random() < 0.5 ? -speed : speed,
+            type: e.type,
+            alive: true,
+          });
+        }
+
+        // Dragon enemy - only on medium and hard
+        if (selectedDifficulty !== "easy") {
+          const dragonSpeed = 2 * difficulty.enemySpeedMultiplier;
+          enemies.push({
+            x: 550,
+            y: 200,
+            width: 48,
+            height: 32,
+            velocityX: dragonSpeed,
+            velocityY: 0,
+            type: "dragon",
+            alive: true,
+            health: 2,
+            flightTimer: 0,
+            fireTimer: 0,
+          });
+        }
+
+        // Boss enemy - always present but harder on higher difficulties
+        enemies.push({
+          x: 1600,
           y: GROUND_LEVEL - 64,
           width: 64,
           height: 64,
-          velocityX: 0, // Start stationary
+          velocityX: 0,
           type: "bowser",
           alive: true,
-          health: 5, // Boss needs multiple hits
+          health:
+            selectedDifficulty === "easy"
+              ? 3
+              : selectedDifficulty === "medium"
+              ? 5
+              : 8,
           directionChangeTimer: 0,
-          entered: false, // Track if boss has entered the scene
-        },
-      ];
+          entered: false,
+        });
+      }
 
       // Power-ups
       let powerUps = [];
@@ -761,19 +938,29 @@
       // Particles for effects
       let particles = [];
 
-      // Lava hazards
-      let lavaHazards = [
-        // Initial lava underneath the first dragon
-        {
-          x: 530, // Positioned under the dragon at x=550
-          y: GROUND_LEVEL - 10,
-          width: 88,
-          height: 20,
-          type: "lava",
-          damage: 1,
-          timer: 1800, // 30 seconds (increased from 5)
-        },
-      ];
+      // Lava hazards - initialized based on difficulty
+      let lavaHazards = [];
+
+      // Initialize lava based on difficulty (called in initializeObstacles)
+      function initializeLava() {
+        lavaHazards = [];
+        // Only add lava on medium and hard difficulties
+        if (selectedDifficulty !== "easy") {
+          lavaHazards.push({
+            x: 530, // Positioned under the dragon at x=550
+            y: GROUND_LEVEL - 10,
+            width: selectedDifficulty === "hard" ? 120 : 88,
+            height: 20,
+            type: "lava",
+            damage: 1,
+            timer: 1800,
+          });
+        }
+      }
+
+      // Obstacles (spikes, falling rocks)
+      let obstacles = [];
+      let fallingRocks = [];
 
       // Input handling
       let keys = {};
@@ -816,10 +1003,12 @@
         updatePowerUps();
         updateParticles();
         updateLava();
+        updateObstacles(); // Update spikes and falling rocks
         generateGround(); // Generate infinite ground
         generatePlatforms(); // Procedural generation
         updateFlyingPlatforms(); // Update flying platform positions
         generateEnemies(); // Procedural generation
+        generateObstacles(); // Generate spikes and rocks
         checkCollisions();
         render();
 
@@ -999,6 +1188,7 @@
       let nextPlatformX = 1700; // Start generating after initial platforms
       let nextEnemyX = 1800;
       let nextGroundX = 800; // Start extending ground
+      let nextObstacleX = 500; // Start generating obstacles early
 
       // Generate infinite ground
       function generateGround() {
@@ -1135,6 +1325,8 @@
 
       // Generate random enemies as Mario progresses
       function generateEnemies() {
+        const difficulty = getDifficulty();
+
         // Only generate if Mario is approaching
         while (nextEnemyX < mario.x + CANVAS_WIDTH * 2) {
           const x = nextEnemyX;
@@ -1144,20 +1336,22 @@
           // Mid game (1000-3000): mix of all enemies
           // Late game (3000+): more dragons and harder enemies
           const distanceTraveled = x;
-          const difficultyFactor = Math.min(distanceTraveled / 3000, 1); // 0 to 1
+          const distanceFactor = Math.min(distanceTraveled / 3000, 1); // 0 to 1
 
-          // Adjust spawn rates based on difficulty
-          // Early: 60% Goomba, 30% Koopa, 10% Dragon
-          // Late: 20% Goomba, 30% Koopa, 50% Dragon
-          const dragonChance = 0.1 + difficultyFactor * 0.4; // 10% -> 50%
+          // Adjust spawn rates based on difficulty settings
+          const dragonChance =
+            difficulty.dragonChanceBase +
+            distanceFactor *
+              (difficulty.dragonChanceMax - difficulty.dragonChanceBase);
           const koopaChance = 0.3; // stays at 30%
-          const goombaChance = 0.6 - difficultyFactor * 0.4; // 60% -> 20%
+          const goombaChance = 1 - dragonChance - koopaChance;
 
           const enemyType = Math.random();
 
           if (enemyType < goombaChance) {
-            // Goomba - gets faster with distance
-            const speed = 1 + difficultyFactor * 0.5; // 1 -> 1.5
+            // Goomba - speed affected by difficulty
+            const speed =
+              (1 + distanceFactor * 0.5) * difficulty.enemySpeedMultiplier;
             enemies.push({
               x: x,
               y: GROUND_LEVEL - 32,
@@ -1168,8 +1362,9 @@
               alive: true,
             });
           } else if (enemyType < goombaChance + koopaChance) {
-            // Koopa - gets faster with distance
-            const speed = 1 + difficultyFactor * 0.8; // 1 -> 1.8
+            // Koopa - speed affected by difficulty
+            const speed =
+              (1 + distanceFactor * 0.8) * difficulty.enemySpeedMultiplier;
             enemies.push({
               x: x,
               y: GROUND_LEVEL - 32,
@@ -1180,10 +1375,11 @@
               alive: true,
             });
           } else {
-            // Flying dragon with lava underneath - gets faster and more health
+            // Flying dragon with lava underneath - speed and health affected by difficulty
             const dragonY = 150 + Math.random() * 100;
-            const speed = 2 + difficultyFactor * 1; // 2 -> 3
-            const health = 2 + Math.floor(difficultyFactor * 2); // 2 -> 4
+            const speed =
+              (2 + distanceFactor * 1) * difficulty.enemySpeedMultiplier;
+            const health = 2 + Math.floor(distanceFactor * 2);
             enemies.push({
               x: x,
               y: dragonY,
@@ -1198,8 +1394,8 @@
               fireTimer: 0,
             });
 
-            // Add lava underneath the dragon - gets wider with distance
-            const lavaWidth = 64 + difficultyFactor * 32; // 64 -> 96 (standard width)
+            // Add lava underneath the dragon - width based on difficulty
+            const lavaWidth = difficulty.lavaWidth + distanceFactor * 32;
             lavaHazards.push({
               x: x - 20,
               y: GROUND_LEVEL - 10,
@@ -1211,8 +1407,10 @@
             });
           }
 
-          // Enemy spawn rate increases with difficulty - enemies get closer together
-          const spawnGap = 250 - difficultyFactor * 100; // 250 -> 150
+          // Enemy spawn rate based on difficulty settings
+          const spawnGap =
+            difficulty.spawnGapBase -
+            distanceFactor * difficulty.spawnGapReduction;
           nextEnemyX += spawnGap + Math.random() * 150;
         }
       }
@@ -1289,6 +1487,100 @@
           ) {
             lavaHazards.splice(i, 1);
           }
+        }
+      }
+
+      // Update obstacles (spikes and falling rocks)
+      function updateObstacles() {
+        const cameraLeft = cameraX - CANVAS_WIDTH;
+        const cameraRight = cameraX + CANVAS_WIDTH * 3;
+
+        // Update spikes - remove off-screen ones
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const obstacle = obstacles[i];
+          if (
+            obstacle.x + obstacle.width < cameraLeft ||
+            obstacle.x > cameraRight
+          ) {
+            obstacles.splice(i, 1);
+          }
+        }
+
+        // Update falling rocks
+        for (let i = fallingRocks.length - 1; i >= 0; i--) {
+          const rock = fallingRocks[i];
+
+          // Apply gravity
+          rock.velocityY += 0.3;
+          rock.y += rock.velocityY;
+          rock.rotation += rock.rotationSpeed;
+
+          // Remove rocks that hit the ground or are off-screen
+          if (
+            rock.y > GROUND_LEVEL ||
+            rock.x < cameraLeft ||
+            rock.x > cameraRight
+          ) {
+            // Create impact particles
+            if (rock.y > GROUND_LEVEL - 20) {
+              for (let j = 0; j < 5; j++) {
+                particles.push({
+                  x: rock.x + rock.width / 2,
+                  y: GROUND_LEVEL,
+                  velocityX: (Math.random() - 0.5) * 4,
+                  velocityY: -Math.random() * 3,
+                  life: 20,
+                  color: "#8B4513",
+                  size: 3 + Math.random() * 3,
+                });
+              }
+            }
+            fallingRocks.splice(i, 1);
+          }
+        }
+
+        // Spawn new falling rocks near Mario
+        const difficulty = getDifficulty();
+        if (Math.random() < difficulty.rockSpawnRate * 0.01) {
+          // Spawn rock ahead of Mario
+          const spawnX = mario.x + CANVAS_WIDTH * 0.5 + Math.random() * 200;
+          fallingRocks.push({
+            x: spawnX,
+            y: -50,
+            width: 24 + Math.random() * 16,
+            height: 24 + Math.random() * 16,
+            velocityY: 1 + Math.random() * 2,
+            rotation: 0,
+            rotationSpeed: (Math.random() - 0.5) * 0.2,
+          });
+        }
+      }
+
+      // Generate obstacles as Mario progresses
+      function generateObstacles() {
+        const difficulty = getDifficulty();
+
+        // Generate spikes
+        while (nextObstacleX < mario.x + CANVAS_WIDTH * 2) {
+          const x = nextObstacleX;
+
+          // Spike spawn based on difficulty
+          if (Math.random() < difficulty.spikeSpawnRate) {
+            // Create spike trap on ground
+            const spikeCount = 1 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < spikeCount; i++) {
+              obstacles.push({
+                x: x + i * 24,
+                y: GROUND_LEVEL - 20,
+                width: 24,
+                height: 20,
+                type: "spike",
+              });
+            }
+          }
+
+          // Increase gap between obstacle spawn points
+          nextObstacleX += 200 + Math.random() * 300;
         }
       }
 
@@ -1373,6 +1665,48 @@
             }
           }
         });
+
+        // Mario vs spikes
+        obstacles.forEach((obstacle) => {
+          if (obstacle.type === "spike" && checkCollision(mario, obstacle)) {
+            playSpikeSound();
+            loseLife();
+            // Add spike hit particles
+            for (let i = 0; i < 6; i++) {
+              particles.push({
+                x: mario.x + 16,
+                y: mario.y + mario.height,
+                velocityX: (Math.random() - 0.5) * 3,
+                velocityY: -Math.random() * 4,
+                life: 15,
+                color: "#A0A0A0",
+                size: 2 + Math.random() * 2,
+              });
+            }
+          }
+        });
+
+        // Mario vs falling rocks
+        for (let i = fallingRocks.length - 1; i >= 0; i--) {
+          const rock = fallingRocks[i];
+          if (checkCollision(mario, rock)) {
+            playBreakSound();
+            loseLife();
+            fallingRocks.splice(i, 1);
+            // Add rock break particles
+            for (let j = 0; j < 8; j++) {
+              particles.push({
+                x: rock.x + rock.width / 2,
+                y: rock.y + rock.height / 2,
+                velocityX: (Math.random() - 0.5) * 5,
+                velocityY: (Math.random() - 0.5) * 5,
+                life: 25,
+                color: Math.random() < 0.5 ? "#8B4513" : "#A0522D",
+                size: 4 + Math.random() * 4,
+              });
+            }
+          }
+        }
 
         // Mario vs power-ups
         for (
@@ -1539,9 +1873,51 @@
         }
         // Start background music on first user interaction
         if (!audioStarted) {
+          // Initialize enemies based on selected difficulty
+          initializeEnemies();
+          // Initialize initial obstacles
+          initializeObstacles();
           startBackgroundMusic();
           audioStarted = true;
           hideAudioOverlay();
+        }
+      }
+
+      // Initialize obstacles based on difficulty
+      function initializeObstacles() {
+        const difficulty = getDifficulty();
+        obstacles = [];
+        fallingRocks = [];
+
+        // Initialize lava hazards
+        initializeLava();
+
+        // Add some initial spikes based on difficulty
+        if (selectedDifficulty !== "easy") {
+          // Add spikes at various positions
+          const spikePositions = [450, 800, 1150];
+          spikePositions.forEach((pos, idx) => {
+            if (idx < (selectedDifficulty === "hard" ? 3 : 1)) {
+              obstacles.push({
+                x: pos,
+                y: GROUND_LEVEL - 20,
+                width: 24,
+                height: 20,
+                type: "spike",
+              });
+            }
+          });
+        }
+
+        // Update UI to show current difficulty
+        const difficultyLabels = {
+          easy: "🌱 Easy",
+          medium: "⚡ Medium",
+          hard: "🔥 Hard",
+        };
+        const diffDisplay = document.getElementById("current-difficulty");
+        if (diffDisplay) {
+          diffDisplay.textContent = difficultyLabels[selectedDifficulty];
         }
       }
 
@@ -1566,9 +1942,46 @@
           });
         });
 
+        // Handle difficulty selection
+        document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering enableAudio
+            const difficulty = btn.getAttribute("data-difficulty");
+            selectDifficulty(difficulty);
+          });
+        });
+
         // Initialize song selection display
         updateSongSelection();
+        updateDifficultySelection();
       });
+
+      // Function to select difficulty
+      function selectDifficulty(difficulty) {
+        if (difficultyConfig[difficulty]) {
+          selectedDifficulty = difficulty;
+          updateDifficultySelection();
+        }
+      }
+
+      function updateDifficultySelection() {
+        // Remove selected class from all options
+        document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+          btn.classList.remove("selected");
+        });
+        // Add selected class to current selection
+        const selectedBtn = document.querySelector(
+          `.difficulty-btn[data-difficulty="${selectedDifficulty}"]`
+        );
+        if (selectedBtn) {
+          selectedBtn.classList.add("selected");
+        }
+        // Update description
+        const infoEl = document.getElementById("difficulty-info");
+        if (infoEl) {
+          infoEl.textContent = getDifficulty().description;
+        }
+      }
 
       // Update timer
       function updateTimer() {
@@ -1644,6 +2057,18 @@
           }
 
           ctx.globalAlpha = 1;
+        });
+
+        // Draw obstacles (spikes)
+        obstacles.forEach((obstacle) => {
+          if (obstacle.type === "spike") {
+            drawSpike(obstacle);
+          }
+        });
+
+        // Draw falling rocks
+        fallingRocks.forEach((rock) => {
+          drawFallingRock(rock);
         });
 
         // Draw particles
@@ -2076,6 +2501,105 @@
           ctx.fillRect(powerUp.x + 20, powerUp.y + 8, 4, 4);
           ctx.fillRect(powerUp.x + 8, powerUp.y + 20, 4, 4);
           ctx.fillRect(powerUp.x + 20, powerUp.y + 20, 4, 4);
+        }
+      }
+
+      // Draw spike obstacle
+      function drawSpike(spike) {
+        const x = spike.x;
+        const y = spike.y;
+        const w = spike.width;
+        const h = spike.height;
+
+        // Draw triangular spike
+        ctx.fillStyle = "#808080"; // Gray metal color
+        ctx.beginPath();
+        ctx.moveTo(x, y + h); // Bottom left
+        ctx.lineTo(x + w / 2, y); // Top center (point)
+        ctx.lineTo(x + w, y + h); // Bottom right
+        ctx.closePath();
+        ctx.fill();
+
+        // Add highlight
+        ctx.fillStyle = "#A0A0A0";
+        ctx.beginPath();
+        ctx.moveTo(x + 3, y + h);
+        ctx.lineTo(x + w / 2, y + 3);
+        ctx.lineTo(x + w / 2, y + h);
+        ctx.closePath();
+        ctx.fill();
+
+        // Add dark edge
+        ctx.strokeStyle = "#404040";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y + h);
+        ctx.lineTo(x + w / 2, y);
+        ctx.lineTo(x + w, y + h);
+        ctx.stroke();
+
+        // Base
+        ctx.fillStyle = "#505050";
+        ctx.fillRect(x, y + h - 4, w, 4);
+      }
+
+      // Draw falling rock
+      function drawFallingRock(rock) {
+        ctx.save();
+        ctx.translate(rock.x + rock.width / 2, rock.y + rock.height / 2);
+        ctx.rotate(rock.rotation);
+
+        // Main rock body - irregular shape
+        ctx.fillStyle = "#8B4513"; // Brown
+        ctx.fillRect(
+          -rock.width / 2,
+          -rock.height / 2,
+          rock.width,
+          rock.height
+        );
+
+        // Add texture/cracks
+        ctx.fillStyle = "#654321";
+        ctx.fillRect(
+          -rock.width / 4,
+          -rock.height / 3,
+          rock.width / 4,
+          rock.height / 3
+        );
+        ctx.fillRect(
+          rock.width / 6,
+          rock.height / 6,
+          rock.width / 4,
+          rock.height / 4
+        );
+
+        // Highlight
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(
+          -rock.width / 3,
+          -rock.height / 2,
+          rock.width / 3,
+          rock.height / 4
+        );
+
+        // Outline
+        ctx.strokeStyle = "#3E2723";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          -rock.width / 2,
+          -rock.height / 2,
+          rock.width,
+          rock.height
+        );
+
+        ctx.restore();
+
+        // Warning indicator above rock
+        if (rock.y < 50) {
+          ctx.fillStyle = "rgba(255, 0, 0, 0.7)";
+          ctx.font = "bold 16px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("⚠", rock.x + rock.width / 2, 30);
         }
       }
 

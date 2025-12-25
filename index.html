@@ -1305,6 +1305,40 @@
       // Input handling
       let keys = {};
 
+      // Update platform positions relative to GROUND_LEVEL for responsive design
+      function updatePlatformPositions() {
+        // Ground
+        platforms[0].y = GROUND_LEVEL;
+
+        // Platforms (relative to GROUND_LEVEL)
+        platforms[1].y = GROUND_LEVEL - 100; // x: 300
+        platforms[2].y = GROUND_LEVEL - 150; // x: 500
+        platforms[3].y = GROUND_LEVEL - 200; // x: 650
+        platforms[4].y = GROUND_LEVEL - 250; // x: 850
+        platforms[5].y = GROUND_LEVEL - 300; // x: 950
+        platforms[6].y = GROUND_LEVEL - 220; // x: 1050
+        platforms[7].y = GROUND_LEVEL - 280; // x: 1150
+        platforms[8].y = GROUND_LEVEL - 150; // x: 1300 (Boss platform)
+
+        // Bricks (32px above their respective platforms)
+        platforms[9].y = GROUND_LEVEL - 132; // x: 350 (above platform 1)
+        platforms[10].y = GROUND_LEVEL - 132; // x: 382
+        platforms[11].y = GROUND_LEVEL - 132; // x: 414
+        platforms[12].y = GROUND_LEVEL - 282; // x: 850 (above platform 4)
+        platforms[13].y = GROUND_LEVEL - 282; // x: 882
+        platforms[14].y = GROUND_LEVEL - 252; // x: 1050 (above platform 6)
+        platforms[15].y = GROUND_LEVEL - 182; // x: 1300 (above boss platform)
+
+        // Question blocks
+        platforms[16].y = GROUND_LEVEL - 132; // x: 446
+        platforms[17].y = GROUND_LEVEL - 182; // x: 550
+        platforms[18].y = GROUND_LEVEL - 332; // x: 950 (above platform 5)
+        platforms[19].y = GROUND_LEVEL - 312; // x: 1150 (above platform 7)
+
+        // Pipe
+        platforms[20].y = GROUND_LEVEL - 32; // x: 700
+      }
+
       // Initialize game
       function init() {
         canvas = document.getElementById("game-canvas");
@@ -1323,8 +1357,8 @@
         // Update Mario's initial position based on new ground level
         mario.y = GROUND_LEVEL - 32;
 
-        // Update initial ground platform position
-        platforms[0].y = GROUND_LEVEL;
+        // Update all initial platform and object positions relative to GROUND_LEVEL
+        updatePlatformPositions();
 
         // Initialize audio
         initAudio();
@@ -1352,8 +1386,8 @@
           // Update Mario's position based on new ground level
           if (!gameRunning) {
             mario.y = GROUND_LEVEL - 32;
-            // Update initial ground platform position
-            platforms[0].y = GROUND_LEVEL;
+            // Update all platform positions
+            updatePlatformPositions();
           } else {
             // If game is running, ensure Mario doesn't fall through the ground
             if (mario.y + mario.height > GROUND_LEVEL) {

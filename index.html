@@ -75,35 +75,85 @@
         text-align: center;
         font-size: 18px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        max-width: 500px;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-x: hidden;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
       }
 
       #audio-message h2 {
         margin-top: 0;
+        margin-bottom: 10px;
         color: #ff6b35;
+      }
+
+      .section-label {
+        font-weight: bold;
+        margin-bottom: 10px;
+        margin-top: 10px;
+        color: #333;
+        font-size: 16px;
       }
 
       #audio-message p {
         margin-bottom: 20px;
       }
 
+      /* Custom scrollbar styling */
+      #audio-message::-webkit-scrollbar,
+      .song-selection::-webkit-scrollbar,
+      .character-options::-webkit-scrollbar {
+        width: 8px;
+        height: 6px;
+      }
+
+      #audio-message::-webkit-scrollbar-track,
+      .song-selection::-webkit-scrollbar-track,
+      .character-options::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      #audio-message::-webkit-scrollbar-thumb,
+      .song-selection::-webkit-scrollbar-thumb,
+      .character-options::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+
+      #audio-message::-webkit-scrollbar-thumb:hover,
+      .song-selection::-webkit-scrollbar-thumb:hover,
+      .character-options::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
       .song-selection {
         margin: 20px 0;
         text-align: left;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+        max-height: 40vh;
+        overflow-y: auto;
+        padding: 8px;
       }
 
       .song-option {
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
+        justify-content: center;
         align-items: center;
-        padding: 12px 16px;
-        margin: 8px 0;
+        padding: 18px 14px;
         background-color: #f8f9fa;
         border: 2px solid #e9ecef;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-size: 16px;
+        font-size: 14px;
+        text-align: center;
+        min-height: 90px;
       }
 
       .song-option:hover {
@@ -123,16 +173,19 @@
 
       .song-info {
         flex-grow: 1;
+        width: 100%;
       }
 
       .song-name {
         font-weight: bold;
-        font-size: 16px;
+        font-size: 18px;
+        margin-bottom: 6px;
       }
 
       .song-description {
-        font-size: 14px;
+        font-size: 13px;
         opacity: 0.8;
+        line-height: 1.4;
       }
 
       .song-option.selected .song-description {
@@ -141,13 +194,14 @@
 
       /* Difficulty Selection */
       .difficulty-selection {
-        margin: 20px 0;
+        margin: 15px 0;
       }
 
       .difficulty-label {
         font-weight: bold;
         margin-bottom: 10px;
         color: #333;
+        font-size: 16px;
       }
 
       .difficulty-options {
@@ -211,6 +265,115 @@
         margin-top: 8px;
       }
 
+      /* Character Selection */
+      .character-selection {
+        margin: 15px 0;
+      }
+
+      .character-label {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 16px;
+      }
+
+      .character-options {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 5px 0;
+      }
+
+      .character-btn {
+        padding: 10px 8px;
+        border: 3px solid #ddd;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: linear-gradient(to bottom, #fff 0%, #f0f0f0 100%);
+        min-width: 85px;
+        max-width: 85px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .character-preview {
+        width: 48px;
+        height: 48px;
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+        flex-shrink: 0;
+      }
+
+      .character-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .character-btn.mario {
+        border-color: #ff0000;
+        color: #ff0000;
+      }
+
+      .character-btn.mario.selected {
+        background: linear-gradient(to bottom, #ff6b6b 0%, #ff0000 100%);
+        color: white;
+        border-color: #cc0000;
+      }
+
+      .character-btn.luigi {
+        border-color: #00cc00;
+        color: #00cc00;
+      }
+
+      .character-btn.luigi.selected {
+        background: linear-gradient(to bottom, #66ff66 0%, #00cc00 100%);
+        color: white;
+        border-color: #009900;
+      }
+
+      .character-btn.peach {
+        border-color: #ff69b4;
+        color: #ff69b4;
+      }
+
+      .character-btn.peach.selected {
+        background: linear-gradient(to bottom, #ffb3d9 0%, #ff69b4 100%);
+        color: white;
+        border-color: #ff1493;
+      }
+
+      .character-btn.toad {
+        border-color: #9370db;
+        color: #9370db;
+      }
+
+      .character-btn.toad.selected {
+        background: linear-gradient(to bottom, #ba9ddb 0%, #9370db 100%);
+        color: white;
+        border-color: #7b68ee;
+      }
+
+      .character-btn.bowser {
+        border-color: #ff8c00;
+        color: #ff8c00;
+      }
+
+      .character-btn.bowser.selected {
+        background: linear-gradient(to bottom, #ffb347 0%, #ff8c00 100%);
+        color: white;
+        border-color: #ff6600;
+      }
+
       #enable-audio-btn {
         background-color: #ff6b35;
         color: white;
@@ -218,9 +381,12 @@
         padding: 15px 30px;
         border-radius: 8px;
         font-size: 16px;
+        font-weight: bold;
         cursor: pointer;
         transition: background-color 0.3s ease;
         margin-top: 20px;
+        width: 100%;
+        flex-shrink: 0;
       }
 
       #enable-audio-btn:hover {
@@ -296,6 +462,44 @@
           height: 120px;
           font-size: 24px;
         }
+
+        #audio-message {
+          max-width: 95vw;
+          max-height: 95vh;
+          padding: 20px 15px;
+        }
+
+        .song-selection {
+          grid-template-columns: 1fr;
+          max-height: 35vh;
+        }
+
+        .character-options {
+          gap: 6px;
+          justify-content: flex-start;
+        }
+
+        .character-btn {
+          min-width: 65px;
+          max-width: 65px;
+          padding: 8px 4px;
+          font-size: 11px;
+          gap: 4px;
+        }
+
+        .character-preview {
+          width: 40px;
+          height: 40px;
+        }
+
+        .difficulty-options {
+          gap: 8px;
+        }
+
+        .difficulty-btn {
+          padding: 10px 16px;
+          font-size: 12px;
+        }
       }
 
       button {
@@ -354,11 +558,8 @@
       <div id="audio-overlay">
         <div id="audio-message">
           <h2>🎵 Choose Your Soundtrack</h2>
-          <p>
-            Select your favorite background music and enable sound effects for
-            the best gaming experience!
-          </p>
 
+          <div class="section-label">🎶 Background Music</div>
           <div class="song-selection">
             <div class="song-option selected" data-index="0">
               <div class="song-info">
@@ -404,6 +605,57 @@
             </div>
             <div class="difficulty-info" id="difficulty-info">
               Fewer enemies, slower speed, less obstacles
+            </div>
+          </div>
+
+          <div class="character-selection">
+            <div class="character-label">🎮 Select Character</div>
+            <div class="character-options">
+              <div class="character-btn mario selected" data-character="mario">
+                <canvas
+                  class="character-preview"
+                  id="preview-mario"
+                  width="48"
+                  height="48"
+                ></canvas>
+                Mario
+              </div>
+              <div class="character-btn luigi" data-character="luigi">
+                <canvas
+                  class="character-preview"
+                  id="preview-luigi"
+                  width="48"
+                  height="48"
+                ></canvas>
+                Luigi
+              </div>
+              <div class="character-btn peach" data-character="peach">
+                <canvas
+                  class="character-preview"
+                  id="preview-peach"
+                  width="48"
+                  height="48"
+                ></canvas>
+                Peach
+              </div>
+              <div class="character-btn toad" data-character="toad">
+                <canvas
+                  class="character-preview"
+                  id="preview-toad"
+                  width="48"
+                  height="48"
+                ></canvas>
+                Toad
+              </div>
+              <div class="character-btn bowser" data-character="bowser">
+                <canvas
+                  class="character-preview"
+                  id="preview-bowser"
+                  width="48"
+                  height="48"
+                ></canvas>
+                Bowser
+              </div>
             </div>
           </div>
 
@@ -453,6 +705,7 @@
 
       let selectedSongIndex = 0; // Default to first song
       let selectedDifficulty = "easy"; // Default difficulty
+      let selectedCharacter = "mario"; // Default character
 
       // Difficulty configurations
       const difficultyConfig = {
@@ -2223,9 +2476,22 @@
           });
         });
 
+        // Handle character selection
+        document.querySelectorAll(".character-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent triggering enableAudio
+            const character = btn.getAttribute("data-character");
+            selectCharacter(character);
+          });
+        });
+
         // Initialize song selection display
         updateSongSelection();
         updateDifficultySelection();
+        updateCharacterSelection();
+
+        // Draw character previews
+        drawCharacterPreviews();
       });
 
       // Function to select difficulty
@@ -2253,6 +2519,310 @@
         if (infoEl) {
           infoEl.textContent = getDifficulty().description;
         }
+      }
+
+      // Function to select character
+      function selectCharacter(character) {
+        const validCharacters = ["mario", "luigi", "peach", "toad", "bowser"];
+        if (validCharacters.includes(character)) {
+          selectedCharacter = character;
+          updateCharacterSelection();
+        }
+      }
+
+      function updateCharacterSelection() {
+        // Remove selected class from all options
+        document.querySelectorAll(".character-btn").forEach((btn) => {
+          btn.classList.remove("selected");
+        });
+        // Add selected class to current selection
+        const selectedBtn = document.querySelector(
+          `.character-btn[data-character="${selectedCharacter}"]`
+        );
+        if (selectedBtn) {
+          selectedBtn.classList.add("selected");
+        }
+      }
+
+      // Draw character previews on canvases
+      function drawCharacterPreviews() {
+        // Helper function to draw a character on a given canvas
+        function drawCharacterOnCanvas(canvasId, characterType) {
+          const canvas = document.getElementById(canvasId);
+          if (!canvas) return;
+
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, 48, 48);
+
+          // Scale and position for preview
+          const x = 8;
+          const y = 8;
+          const scale = 1; // Keep 32px character size in 48px canvas
+
+          // Draw based on character type
+          switch (characterType) {
+            case "mario":
+              drawMarioPreview(ctx, x, y);
+              break;
+            case "luigi":
+              drawLuigiPreview(ctx, x, y);
+              break;
+            case "peach":
+              drawPeachPreview(ctx, x, y);
+              break;
+            case "toad":
+              drawToadPreview(ctx, x, y);
+              break;
+            case "bowser":
+              drawBowserPreview(ctx, x, y);
+              break;
+          }
+        }
+
+        // Draw each character preview
+        drawCharacterOnCanvas("preview-mario", "mario");
+        drawCharacterOnCanvas("preview-luigi", "luigi");
+        drawCharacterOnCanvas("preview-peach", "peach");
+        drawCharacterOnCanvas("preview-toad", "toad");
+        drawCharacterOnCanvas("preview-bowser", "bowser");
+      }
+
+      // Preview drawing functions (simplified versions)
+      function drawMarioPreview(ctx, x, y) {
+        // Overalls (blue)
+        ctx.fillStyle = "#0000FF";
+        ctx.fillRect(x + 6, y + 16, 20, 16);
+
+        // Shirt (red)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(x + 6, y + 8, 20, 8);
+
+        // Skin (peach)
+        ctx.fillStyle = "#FFB366";
+        ctx.fillRect(x + 8, y + 4, 16, 12);
+
+        // Hat (red)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(x + 6, y - 2, 20, 8);
+        ctx.fillStyle = "#FFF";
+        ctx.font = "bold 6px Arial";
+        ctx.fillText("M", x + 14, y + 4);
+
+        // Eyes
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(x + 10, y + 6, 3, 3);
+        ctx.fillRect(x + 19, y + 6, 3, 3);
+
+        // Mustache
+        ctx.fillRect(x + 12, y + 12, 8, 2);
+
+        // Buttons
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + 14, y + 20, 4, 4);
+
+        // Gloves
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(x + 2, y + 16, 6, 8);
+        ctx.fillRect(x + 24, y + 16, 6, 8);
+
+        // Shoes
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(x + 4, y + 28, 8, 4);
+        ctx.fillRect(x + 20, y + 28, 8, 4);
+      }
+
+      function drawLuigiPreview(ctx, x, y) {
+        // Overalls (green)
+        ctx.fillStyle = "#00AA00";
+        ctx.fillRect(x + 6, y + 16, 20, 16);
+
+        // Shirt (green)
+        ctx.fillStyle = "#00DD00";
+        ctx.fillRect(x + 6, y + 8, 20, 8);
+
+        // Skin
+        ctx.fillStyle = "#FFB366";
+        ctx.fillRect(x + 8, y + 4, 16, 12);
+
+        // Hat (green)
+        ctx.fillStyle = "#00AA00";
+        ctx.fillRect(x + 6, y - 2, 20, 8);
+        ctx.fillStyle = "#FFF";
+        ctx.font = "bold 6px Arial";
+        ctx.fillText("L", x + 14, y + 4);
+
+        // Eyes
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(x + 10, y + 6, 3, 3);
+        ctx.fillRect(x + 19, y + 6, 3, 3);
+
+        // Mustache
+        ctx.fillRect(x + 12, y + 12, 8, 2);
+
+        // Buttons
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + 14, y + 20, 4, 4);
+
+        // Gloves
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(x + 2, y + 16, 6, 8);
+        ctx.fillRect(x + 24, y + 16, 6, 8);
+
+        // Shoes
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(x + 4, y + 28, 8, 4);
+        ctx.fillRect(x + 20, y + 28, 8, 4);
+      }
+
+      function drawPeachPreview(ctx, x, y) {
+        // Dress (pink)
+        ctx.fillStyle = "#FFB3D9";
+        ctx.fillRect(x + 4, y + 14, 24, 18);
+
+        // Dress top
+        ctx.fillStyle = "#FFC0E0";
+        ctx.fillRect(x + 6, y + 8, 20, 8);
+
+        // Skin
+        ctx.fillStyle = "#FFCCAA";
+        ctx.fillRect(x + 8, y + 4, 16, 12);
+
+        // Hair (blonde)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + 6, y - 2, 20, 8);
+        ctx.fillRect(x + 4, y + 2, 24, 6);
+
+        // Crown
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + 10, y - 4, 12, 4);
+        ctx.fillStyle = "#FF69B4";
+        ctx.fillRect(x + 12, y - 6, 2, 2);
+        ctx.fillRect(x + 16, y - 6, 2, 2);
+        ctx.fillRect(x + 20, y - 6, 2, 2);
+
+        // Eyes (blue)
+        ctx.fillStyle = "#0066FF";
+        ctx.fillRect(x + 10, y + 6, 3, 3);
+        ctx.fillRect(x + 19, y + 6, 3, 3);
+
+        // Smile
+        ctx.fillStyle = "#FF69B4";
+        ctx.fillRect(x + 12, y + 12, 8, 2);
+
+        // Earrings
+        ctx.fillStyle = "#87CEEB";
+        ctx.fillRect(x + 7, y + 8, 2, 3);
+        ctx.fillRect(x + 23, y + 8, 2, 3);
+
+        // Gloves
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(x + 2, y + 16, 6, 8);
+        ctx.fillRect(x + 24, y + 16, 6, 8);
+
+        // Shoes (red heels)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(x + 4, y + 28, 8, 4);
+        ctx.fillRect(x + 20, y + 28, 8, 4);
+      }
+
+      function drawToadPreview(ctx, x, y) {
+        // Vest (blue)
+        ctx.fillStyle = "#0066CC";
+        ctx.fillRect(x + 6, y + 16, 20, 16);
+
+        // Body (white)
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x + 8, y + 8, 16, 16);
+
+        // Head
+        ctx.fillStyle = "#FFE4C4";
+        ctx.fillRect(x + 6, y, 20, 16);
+
+        // Mushroom cap (red)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(x + 4, y - 4, 24, 12);
+
+        // White spots
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x + 8, y - 2, 4, 4);
+        ctx.fillRect(x + 16, y - 2, 4, 4);
+        ctx.fillRect(x + 12, y + 2, 4, 4);
+        ctx.fillRect(x + 20, y + 2, 4, 4);
+
+        // Eyes
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x + 10, y + 6, 4, 4);
+        ctx.fillRect(x + 18, y + 6, 4, 4);
+
+        // Smile
+        ctx.fillRect(x + 12, y + 12, 8, 2);
+
+        // Button
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + 14, y + 20, 4, 4);
+
+        // Arms
+        ctx.fillStyle = "#FFE4C4";
+        ctx.fillRect(x + 2, y + 16, 6, 8);
+        ctx.fillRect(x + 24, y + 16, 6, 8);
+
+        // Shoes
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(x + 6, y + 28, 8, 4);
+        ctx.fillRect(x + 18, y + 28, 8, 4);
+      }
+
+      function drawBowserPreview(ctx, x, y) {
+        // Body (orange/red)
+        ctx.fillStyle = "#FF6600";
+        ctx.fillRect(x + 6, y + 12, 20, 20);
+
+        // Shell spikes
+        ctx.fillStyle = "#FFD700";
+        for (let i = 0; i < 3; i++) {
+          ctx.fillRect(x + 10 + i * 6, y + 8, 4, 6);
+        }
+
+        // Head
+        ctx.fillStyle = "#FF8800";
+        ctx.fillRect(x + 6, y, 20, 16);
+
+        // Horns
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + 4, y - 2, 4, 6);
+        ctx.fillRect(x + 24, y - 2, 4, 6);
+
+        // Eyes (yellow with red pupils)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + 10, y + 4, 4, 4);
+        ctx.fillRect(x + 18, y + 4, 4, 4);
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(x + 11, y + 5, 2, 2);
+        ctx.fillRect(x + 19, y + 5, 2, 2);
+
+        // Eyebrows (angry)
+        ctx.fillStyle = "#CC4400";
+        ctx.fillRect(x + 8, y + 2, 6, 2);
+        ctx.fillRect(x + 18, y + 2, 6, 2);
+
+        // Snout
+        ctx.fillStyle = "#FFAA66";
+        ctx.fillRect(x + 10, y + 10, 12, 6);
+
+        // Fangs
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x + 12, y + 14, 2, 3);
+        ctx.fillRect(x + 18, y + 14, 2, 3);
+
+        // Arms
+        ctx.fillStyle = "#FF8800";
+        ctx.fillRect(x + 2, y + 14, 6, 8);
+        ctx.fillRect(x + 24, y + 14, 6, 8);
+
+        // Feet
+        ctx.fillStyle = "#FF8800";
+        ctx.fillRect(x + 4, y + 28, 8, 4);
+        ctx.fillRect(x + 20, y + 28, 8, 4);
       }
 
       // Update timer
@@ -2368,8 +2938,8 @@
           ctx.globalAlpha = 1;
         });
 
-        // Draw Mario
-        drawMario();
+        // Draw Player (selected character)
+        drawPlayer();
 
         ctx.restore();
 
@@ -2506,6 +3076,29 @@
         }
       }
 
+      // Draw Player (calls appropriate character drawing function)
+      function drawPlayer() {
+        switch (selectedCharacter) {
+          case "mario":
+            drawMario();
+            break;
+          case "luigi":
+            drawLuigi();
+            break;
+          case "peach":
+            drawPeach();
+            break;
+          case "toad":
+            drawToad();
+            break;
+          case "bowser":
+            drawBowserPlayer();
+            break;
+          default:
+            drawMario();
+        }
+      }
+
       // Draw Mario
       function drawMario() {
         // Set Mario's size based on power level
@@ -2593,6 +3186,363 @@
         }
 
         // Update Mario's actual size for collision detection
+        mario.width = baseWidth;
+        mario.height = baseHeight;
+      }
+
+      // Draw Luigi
+      function drawLuigi() {
+        const baseWidth = 32;
+        const baseHeight = mario.powerLevel === 0 ? 32 : 48;
+
+        // Overalls (green instead of blue)
+        ctx.fillStyle = "#00AA00";
+        ctx.fillRect(
+          mario.x + 6,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          20,
+          baseHeight - (mario.powerLevel === 0 ? 16 : 24)
+        );
+
+        // Shirt (green)
+        ctx.fillStyle = "#00DD00";
+        ctx.fillRect(mario.x + 6, mario.y + 8, 20, baseHeight - 24);
+
+        // Skin (peach)
+        ctx.fillStyle = "#FFB366";
+        ctx.fillRect(mario.x + 8, mario.y + 4, 16, 12);
+
+        // Hat (green with logo)
+        ctx.fillStyle = "#00AA00";
+        ctx.fillRect(mario.x + 6, mario.y - 2, 20, 8);
+        // Hat logo (white L)
+        ctx.fillStyle = "#FFF";
+        ctx.font = "bold 6px Arial";
+        ctx.fillText("L", mario.x + 14, mario.y + 4);
+
+        // Eyes (brown)
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(mario.x + 10, mario.y + 6, 3, 3);
+        ctx.fillRect(mario.x + 19, mario.y + 6, 3, 3);
+
+        // Mustache (brown)
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(mario.x + 12, mario.y + 12, 8, 2);
+
+        // Buttons on overalls (yellow)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(
+          mario.x + 14,
+          mario.y + (mario.powerLevel === 0 ? 20 : 28),
+          4,
+          4
+        );
+        ctx.fillRect(
+          mario.x + 14,
+          mario.y + (mario.powerLevel === 0 ? 26 : 36),
+          4,
+          4
+        );
+
+        // Gloves (white)
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(
+          mario.x + 2,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          6,
+          8
+        );
+        ctx.fillRect(
+          mario.x + 24,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          6,
+          8
+        );
+
+        // Shoes (brown)
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(mario.x + 4, mario.y + baseHeight - 4, 8, 4);
+        ctx.fillRect(mario.x + 20, mario.y + baseHeight - 4, 8, 4);
+
+        // Power level effects
+        if (mario.powerLevel === 2) {
+          // Fire Luigi - green flames
+          ctx.fillStyle = "#00FF00";
+          ctx.fillRect(mario.x - 3, mario.y + 8, 4, 12);
+          ctx.fillRect(mario.x + baseWidth - 1, mario.y + 8, 4, 12);
+          ctx.fillStyle = "#ADFF2F";
+          ctx.fillRect(mario.x - 2, mario.y + 6, 2, 8);
+          ctx.fillRect(mario.x + baseWidth, mario.y + 6, 2, 8);
+        }
+
+        mario.width = baseWidth;
+        mario.height = baseHeight;
+      }
+
+      // Draw Peach
+      function drawPeach() {
+        const baseWidth = 32;
+        const baseHeight = mario.powerLevel === 0 ? 32 : 48;
+
+        // Dress (pink)
+        ctx.fillStyle = "#FFB3D9";
+        ctx.fillRect(
+          mario.x + 4,
+          mario.y + (mario.powerLevel === 0 ? 14 : 22),
+          24,
+          baseHeight - (mario.powerLevel === 0 ? 14 : 22)
+        );
+
+        // Dress top (lighter pink)
+        ctx.fillStyle = "#FFC0E0";
+        ctx.fillRect(mario.x + 6, mario.y + 8, 20, baseHeight - 24);
+
+        // Skin (lighter peach)
+        ctx.fillStyle = "#FFCCAA";
+        ctx.fillRect(mario.x + 8, mario.y + 4, 16, 12);
+
+        // Hair (blonde)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(mario.x + 6, mario.y - 2, 20, 8);
+        ctx.fillRect(mario.x + 4, mario.y + 2, 24, 6);
+
+        // Crown (gold)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(mario.x + 10, mario.y - 4, 12, 4);
+        ctx.fillStyle = "#FF69B4";
+        ctx.fillRect(mario.x + 12, mario.y - 6, 2, 2);
+        ctx.fillRect(mario.x + 16, mario.y - 6, 2, 2);
+        ctx.fillRect(mario.x + 20, mario.y - 6, 2, 2);
+
+        // Eyes (blue)
+        ctx.fillStyle = "#0066FF";
+        ctx.fillRect(mario.x + 10, mario.y + 6, 3, 3);
+        ctx.fillRect(mario.x + 19, mario.y + 6, 3, 3);
+
+        // Smile
+        ctx.fillStyle = "#FF69B4";
+        ctx.fillRect(mario.x + 12, mario.y + 12, 8, 2);
+
+        // Earrings (light blue)
+        ctx.fillStyle = "#87CEEB";
+        ctx.fillRect(mario.x + 7, mario.y + 8, 2, 3);
+        ctx.fillRect(mario.x + 23, mario.y + 8, 2, 3);
+
+        // Gloves (white)
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(
+          mario.x + 2,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          6,
+          8
+        );
+        ctx.fillRect(
+          mario.x + 24,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          6,
+          8
+        );
+
+        // Shoes (red heels)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(mario.x + 4, mario.y + baseHeight - 4, 8, 4);
+        ctx.fillRect(mario.x + 20, mario.y + baseHeight - 4, 8, 4);
+
+        // Power level effects
+        if (mario.powerLevel === 2) {
+          // Fire Peach - pink flames
+          ctx.fillStyle = "#FF69B4";
+          ctx.fillRect(mario.x - 3, mario.y + 8, 4, 12);
+          ctx.fillRect(mario.x + baseWidth - 1, mario.y + 8, 4, 12);
+          ctx.fillStyle = "#FFB6C1";
+          ctx.fillRect(mario.x - 2, mario.y + 6, 2, 8);
+          ctx.fillRect(mario.x + baseWidth, mario.y + 6, 2, 8);
+        }
+
+        mario.width = baseWidth;
+        mario.height = baseHeight;
+      }
+
+      // Draw Toad
+      function drawToad() {
+        const baseWidth = 32;
+        const baseHeight = mario.powerLevel === 0 ? 32 : 48;
+
+        // Vest (blue)
+        ctx.fillStyle = "#0066CC";
+        ctx.fillRect(
+          mario.x + 6,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          20,
+          baseHeight - (mario.powerLevel === 0 ? 16 : 24)
+        );
+
+        // Body (white)
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(mario.x + 8, mario.y + 8, 16, baseHeight - 16);
+
+        // Head (white/beige)
+        ctx.fillStyle = "#FFE4C4";
+        ctx.fillRect(mario.x + 6, mario.y, 20, 16);
+
+        // Mushroom cap (red with white spots)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(mario.x + 4, mario.y - 4, 24, 12);
+
+        // White spots on cap
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(mario.x + 8, mario.y - 2, 4, 4);
+        ctx.fillRect(mario.x + 16, mario.y - 2, 4, 4);
+        ctx.fillRect(mario.x + 12, mario.y + 2, 4, 4);
+        ctx.fillRect(mario.x + 20, mario.y + 2, 4, 4);
+
+        // Eyes (large black dots)
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(mario.x + 10, mario.y + 6, 4, 4);
+        ctx.fillRect(mario.x + 18, mario.y + 6, 4, 4);
+
+        // Smile
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(mario.x + 12, mario.y + 12, 8, 2);
+
+        // Vest buttons (yellow)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(
+          mario.x + 14,
+          mario.y + (mario.powerLevel === 0 ? 20 : 28),
+          4,
+          4
+        );
+
+        // Arms (white)
+        ctx.fillStyle = "#FFE4C4";
+        ctx.fillRect(
+          mario.x + 2,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          6,
+          8
+        );
+        ctx.fillRect(
+          mario.x + 24,
+          mario.y + (mario.powerLevel === 0 ? 16 : 24),
+          6,
+          8
+        );
+
+        // Shoes (brown)
+        ctx.fillStyle = "#8B4513";
+        ctx.fillRect(mario.x + 6, mario.y + baseHeight - 4, 8, 4);
+        ctx.fillRect(mario.x + 18, mario.y + baseHeight - 4, 8, 4);
+
+        // Power level effects
+        if (mario.powerLevel === 2) {
+          // Fire Toad - blue flames
+          ctx.fillStyle = "#0066FF";
+          ctx.fillRect(mario.x - 3, mario.y + 8, 4, 12);
+          ctx.fillRect(mario.x + baseWidth - 1, mario.y + 8, 4, 12);
+          ctx.fillStyle = "#66B3FF";
+          ctx.fillRect(mario.x - 2, mario.y + 6, 2, 8);
+          ctx.fillRect(mario.x + baseWidth, mario.y + 6, 2, 8);
+        }
+
+        mario.width = baseWidth;
+        mario.height = baseHeight;
+      }
+
+      // Draw Bowser (playable)
+      function drawBowserPlayer() {
+        const baseWidth = 32;
+        const baseHeight = mario.powerLevel === 0 ? 32 : 48;
+
+        // Body (dark red/orange)
+        ctx.fillStyle = "#FF6600";
+        ctx.fillRect(
+          mario.x + 6,
+          mario.y + (mario.powerLevel === 0 ? 12 : 20),
+          20,
+          baseHeight - (mario.powerLevel === 0 ? 12 : 20)
+        );
+
+        // Shell spikes on back
+        ctx.fillStyle = "#FFD700";
+        for (let i = 0; i < 3; i++) {
+          ctx.fillRect(
+            mario.x + 10 + i * 6,
+            mario.y + (mario.powerLevel === 0 ? 8 : 16),
+            4,
+            6
+          );
+        }
+
+        // Head (orange/red)
+        ctx.fillStyle = "#FF8800";
+        ctx.fillRect(mario.x + 6, mario.y, 20, 16);
+
+        // Horns (yellow)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(mario.x + 4, mario.y - 2, 4, 6);
+        ctx.fillRect(mario.x + 24, mario.y - 2, 4, 6);
+
+        // Eyes (yellow with red pupils)
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(mario.x + 10, mario.y + 4, 4, 4);
+        ctx.fillRect(mario.x + 18, mario.y + 4, 4, 4);
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(mario.x + 11, mario.y + 5, 2, 2);
+        ctx.fillRect(mario.x + 19, mario.y + 5, 2, 2);
+
+        // Eyebrows (angry)
+        ctx.fillStyle = "#CC4400";
+        ctx.fillRect(mario.x + 8, mario.y + 2, 6, 2);
+        ctx.fillRect(mario.x + 18, mario.y + 2, 6, 2);
+
+        // Snout
+        ctx.fillStyle = "#FFAA66";
+        ctx.fillRect(mario.x + 10, mario.y + 10, 12, 6);
+
+        // Fangs
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(mario.x + 12, mario.y + 14, 2, 3);
+        ctx.fillRect(mario.x + 18, mario.y + 14, 2, 3);
+
+        // Arms (orange)
+        ctx.fillStyle = "#FF8800";
+        ctx.fillRect(
+          mario.x + 2,
+          mario.y + (mario.powerLevel === 0 ? 14 : 22),
+          6,
+          8
+        );
+        ctx.fillRect(
+          mario.x + 24,
+          mario.y + (mario.powerLevel === 0 ? 14 : 22),
+          6,
+          8
+        );
+
+        // Claws (black)
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(mario.x + 1, mario.y + baseHeight - 6, 2, 3);
+        ctx.fillRect(mario.x + 4, mario.y + baseHeight - 6, 2, 3);
+        ctx.fillRect(mario.x + 26, mario.y + baseHeight - 6, 2, 3);
+        ctx.fillRect(mario.x + 29, mario.y + baseHeight - 6, 2, 3);
+
+        // Feet (orange)
+        ctx.fillStyle = "#FF8800";
+        ctx.fillRect(mario.x + 4, mario.y + baseHeight - 4, 8, 4);
+        ctx.fillRect(mario.x + 20, mario.y + baseHeight - 4, 8, 4);
+
+        // Power level effects
+        if (mario.powerLevel === 2) {
+          // Fire Bowser - orange flames
+          ctx.fillStyle = "#FF8C00";
+          ctx.fillRect(mario.x - 3, mario.y + 8, 4, 12);
+          ctx.fillRect(mario.x + baseWidth - 1, mario.y + 8, 4, 12);
+          ctx.fillStyle = "#FFA500";
+          ctx.fillRect(mario.x - 2, mario.y + 6, 2, 8);
+          ctx.fillRect(mario.x + baseWidth, mario.y + 6, 2, 8);
+        }
+
         mario.width = baseWidth;
         mario.height = baseHeight;
       }

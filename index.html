@@ -1380,31 +1380,69 @@
             const speed =
               (2 + distanceFactor * 1) * difficulty.enemySpeedMultiplier;
             const health = 2 + Math.floor(distanceFactor * 2);
-            enemies.push({
-              x: x,
-              y: dragonY,
-              width: 48,
-              height: 32,
-              velocityX: Math.random() < 0.5 ? -speed : speed,
-              velocityY: 0,
-              type: "dragon",
-              alive: true,
-              health: health,
-              flightTimer: 0,
-              fireTimer: 0,
-            });
 
-            // Add lava underneath the dragon - width based on difficulty
+            // Calculate lava width for spacing check
             const lavaWidth = difficulty.lavaWidth + distanceFactor * 32;
-            lavaHazards.push({
-              x: x - 20,
-              y: GROUND_LEVEL - 10,
-              width: lavaWidth,
-              height: 20,
-              type: "lava",
-              damage: 1,
-              timer: 999999, // Lava lasts essentially forever
-            });
+            const newLavaX = x - 20;
+
+            // Check if this dragon would be too close to existing dragons
+            let canSpawnDragon = true;
+            for (const hazard of lavaHazards) {
+              if (hazard.type === "lava") {
+                // Check if this lava hazard overlaps or is too close to existing lava
+                // Need at least one lava width of space between lava hazards
+                const minDistance = lavaWidth;
+                const distance = Math.abs(
+                  newLavaX + lavaWidth / 2 - (hazard.x + hazard.width / 2)
+                );
+                const combinedHalfWidths = (lavaWidth + hazard.width) / 2;
+
+                if (distance < combinedHalfWidths + minDistance) {
+                  canSpawnDragon = false;
+                  break;
+                }
+              }
+            }
+
+            // Only spawn dragon if there's enough space
+            if (canSpawnDragon) {
+              enemies.push({
+                x: x,
+                y: dragonY,
+                width: 48,
+                height: 32,
+                velocityX: Math.random() < 0.5 ? -speed : speed,
+                velocityY: 0,
+                type: "dragon",
+                alive: true,
+                health: health,
+                flightTimer: 0,
+                fireTimer: 0,
+              });
+
+              // Add lava underneath the dragon - width based on difficulty
+              lavaHazards.push({
+                x: newLavaX,
+                y: GROUND_LEVEL - 10,
+                width: lavaWidth,
+                height: 20,
+                type: "lava",
+                damage: 1,
+                timer: 999999, // Lava lasts essentially forever
+              });
+            } else {
+              // If we can't spawn a dragon due to spacing, try spawning a different enemy instead
+              // Spawn a goomba instead to maintain enemy density
+              enemies.push({
+                x: x,
+                y: GROUND_LEVEL - 32,
+                width: 32,
+                height: 32,
+                velocityX: Math.random() < 0.5 ? -speed : speed,
+                type: "goomba",
+                alive: true,
+              });
+            }
           }
 
           // Enemy spawn rate based on difficulty settings

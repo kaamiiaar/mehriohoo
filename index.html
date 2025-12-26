@@ -616,7 +616,7 @@
           id="boss-warning"
           style="display: none; color: red; font-weight: bold"
         >
-          ⚠️ BOSS APPROACHING! ⚠️
+          ⚠️ BOWSER'S CASTLE AHEAD! ⚠️
         </div>
         <div id="boss-health" style="display: none">
           Boss Health: <span id="boss-health-value">5</span>
@@ -1068,7 +1068,15 @@
         { x: 950, y: 200, width: 80, height: 20, type: "platform" },
         { x: 1050, y: 280, width: 80, height: 20, type: "platform" },
         { x: 1150, y: 220, width: 80, height: 20, type: "platform" },
-        { x: 1300, y: 350, width: 120, height: 20, type: "platform" }, // Boss platform
+        { x: 1300, y: 350, width: 120, height: 20, type: "platform" },
+
+        // Platforms leading to castle
+        { x: 1500, y: 350, width: 100, height: 20, type: "platform" },
+        { x: 1650, y: 300, width: 100, height: 20, type: "platform" },
+        { x: 1800, y: 250, width: 100, height: 20, type: "platform" },
+        { x: 1950, y: 300, width: 100, height: 20, type: "platform" },
+        { x: 2100, y: 350, width: 100, height: 20, type: "platform" },
+        { x: 2250, y: 380, width: 100, height: 20, type: "platform" }, // Castle approach
 
         // Bricks
         {
@@ -1177,6 +1185,22 @@
       // Bill Blasters (cannons that shoot Bullet Bills)
       let billBlasters = [];
 
+      // Castle structure for Bowser
+      let castle = {
+        x: 2400,
+        y: GROUND_LEVEL - 300,
+        width: 400,
+        height: 300,
+        towers: [
+          { x: 2400, y: GROUND_LEVEL - 350, width: 80, height: 350 },
+          { x: 2720, y: GROUND_LEVEL - 350, width: 80, height: 350 },
+        ],
+        flags: [
+          { x: 2420, y: GROUND_LEVEL - 380 },
+          { x: 2740, y: GROUND_LEVEL - 380 },
+        ],
+      };
+
       // Initial enemies based on difficulty (called after game starts)
       function initializeEnemies() {
         const difficulty = getDifficulty();
@@ -1252,9 +1276,48 @@
           });
         }
 
+        // Castle guard enemies - protect the castle
+        const guardSpeed = 1.5 * difficulty.enemySpeedMultiplier;
+        const castleGuards = [
+          { x: 2200, type: "koopa" },
+          { x: 2350, type: "koopa" },
+          { x: 2450, type: "goomba" },
+        ];
+
+        castleGuards.forEach((guard) => {
+          enemies.push({
+            x: guard.x,
+            y: GROUND_LEVEL - 32,
+            width: 32,
+            height: 32,
+            velocityX: Math.random() < 0.5 ? -guardSpeed : guardSpeed,
+            type: guard.type,
+            alive: true,
+          });
+        });
+
+        // Additional dragon guard near castle on medium and hard
+        if (selectedDifficulty !== "easy") {
+          const dragonSpeed = 2 * difficulty.enemySpeedMultiplier;
+          enemies.push({
+            x: 2300,
+            y: 250,
+            width: 48,
+            height: 32,
+            velocityX: dragonSpeed,
+            velocityY: 0,
+            type: "dragon",
+            alive: true,
+            health: 2,
+            flightTimer: 0,
+            fireTimer: 0,
+          });
+        }
+
         // Boss enemy - always present but harder on higher difficulties
+        // Positioned in front of the castle
         enemies.push({
-          x: 1600,
+          x: 2550, // Positioned in front of castle entrance
           y: GROUND_LEVEL - 64,
           width: 64,
           height: 64,
@@ -1318,25 +1381,45 @@
         platforms[5].y = GROUND_LEVEL - 300; // x: 950
         platforms[6].y = GROUND_LEVEL - 220; // x: 1050
         platforms[7].y = GROUND_LEVEL - 280; // x: 1150
-        platforms[8].y = GROUND_LEVEL - 150; // x: 1300 (Boss platform)
+        platforms[8].y = GROUND_LEVEL - 150; // x: 1300
+
+        // Platforms leading to castle
+        platforms[9].y = GROUND_LEVEL - 150; // x: 1500
+        platforms[10].y = GROUND_LEVEL - 200; // x: 1650
+        platforms[11].y = GROUND_LEVEL - 250; // x: 1800
+        platforms[12].y = GROUND_LEVEL - 200; // x: 1950
+        platforms[13].y = GROUND_LEVEL - 150; // x: 2100
+        platforms[14].y = GROUND_LEVEL - 120; // x: 2250 (Castle approach)
 
         // Bricks (32px above their respective platforms)
-        platforms[9].y = GROUND_LEVEL - 132; // x: 350 (above platform 1)
-        platforms[10].y = GROUND_LEVEL - 132; // x: 382
-        platforms[11].y = GROUND_LEVEL - 132; // x: 414
-        platforms[12].y = GROUND_LEVEL - 282; // x: 850 (above platform 4)
-        platforms[13].y = GROUND_LEVEL - 282; // x: 882
-        platforms[14].y = GROUND_LEVEL - 252; // x: 1050 (above platform 6)
-        platforms[15].y = GROUND_LEVEL - 182; // x: 1300 (above boss platform)
+        platforms[15].y = GROUND_LEVEL - 132; // x: 350 (above platform 1)
+        platforms[16].y = GROUND_LEVEL - 132; // x: 382
+        platforms[17].y = GROUND_LEVEL - 132; // x: 414
+        platforms[18].y = GROUND_LEVEL - 282; // x: 850 (above platform 4)
+        platforms[19].y = GROUND_LEVEL - 282; // x: 882
+        platforms[20].y = GROUND_LEVEL - 252; // x: 1050 (above platform 6)
+        platforms[21].y = GROUND_LEVEL - 182; // x: 1300 (above boss platform)
 
         // Question blocks
-        platforms[16].y = GROUND_LEVEL - 132; // x: 446
-        platforms[17].y = GROUND_LEVEL - 182; // x: 550
-        platforms[18].y = GROUND_LEVEL - 332; // x: 950 (above platform 5)
-        platforms[19].y = GROUND_LEVEL - 312; // x: 1150 (above platform 7)
+        platforms[22].y = GROUND_LEVEL - 132; // x: 446
+        platforms[23].y = GROUND_LEVEL - 182; // x: 550
+        platforms[24].y = GROUND_LEVEL - 332; // x: 950 (above platform 5)
+        platforms[25].y = GROUND_LEVEL - 312; // x: 1150 (above platform 7)
 
         // Pipe
-        platforms[20].y = GROUND_LEVEL - 32; // x: 700
+        platforms[26].y = GROUND_LEVEL - 32; // x: 700
+      }
+
+      // Update castle positions based on GROUND_LEVEL
+      function updateCastlePositions() {
+        castle.y = GROUND_LEVEL - 300;
+        castle.height = 300;
+        castle.towers[0].y = GROUND_LEVEL - 350;
+        castle.towers[0].height = 350;
+        castle.towers[1].y = GROUND_LEVEL - 350;
+        castle.towers[1].height = 350;
+        castle.flags[0].y = GROUND_LEVEL - 380;
+        castle.flags[1].y = GROUND_LEVEL - 380;
       }
 
       // Initialize game
@@ -1359,6 +1442,7 @@
 
         // Update all initial platform and object positions relative to GROUND_LEVEL
         updatePlatformPositions();
+        updateCastlePositions();
 
         // Initialize audio
         initAudio();
@@ -1388,6 +1472,7 @@
             mario.y = GROUND_LEVEL - 32;
             // Update all platform positions
             updatePlatformPositions();
+            updateCastlePositions();
           } else {
             // If game is running, ensure Mario doesn't fall through the ground
             if (mario.y + mario.height > GROUND_LEVEL) {
@@ -1575,10 +1660,10 @@
 
           // Special boss AI
           if (enemy.type === "bowser") {
-            // Boss entrance - move onto screen when Mario gets close
-            if (!enemy.entered && mario.x > 1200) {
+            // Boss guards the castle - becomes active when Mario approaches
+            if (!enemy.entered && mario.x > castle.x - 300) {
               enemy.entered = true;
-              enemy.velocityX = -2; // Start moving left onto the screen
+              enemy.velocityX = -2; // Start moving to defend castle
               playBossEntranceSound(); // Dramatic entrance sound
               createTeleportParticles(enemy.x, enemy.y); // Entrance particles
             }
@@ -1591,8 +1676,16 @@
                 enemy.velocityX *= -1;
                 enemy.directionChangeTimer = 0;
               }
-              // Boss is faster and more aggressive
-              enemy.velocityX = enemy.velocityX > 0 ? 3 : -3;
+              // Boss is faster and more aggressive, but stays near castle
+              const distanceFromCastle = Math.abs(
+                enemy.x - castle.x - castle.width / 2
+              );
+              if (distanceFromCastle > 400) {
+                // Return to castle if too far
+                enemy.velocityX = enemy.x < castle.x ? 3 : -3;
+              } else {
+                enemy.velocityX = enemy.velocityX > 0 ? 3 : -3;
+              }
             }
           }
 
@@ -2188,7 +2281,21 @@
         // Mario vs enemies
         enemies.forEach((enemy, enemyIndex) => {
           if (enemy.alive && checkCollision(mario, enemy)) {
-            if (mario.velocityY > 0 && mario.y < enemy.y) {
+            // Check if Mario jumped on enemy - more lenient for dragon due to wings
+            let jumpedOnEnemy = false;
+            if (mario.velocityY > 0) {
+              if (enemy.type === "dragon") {
+                // Dragon jumping is more lenient - Mario can jump on entire width + threshold
+                jumpedOnEnemy =
+                  mario.y + mario.height <= enemy.y + enemy.height + 8 &&
+                  mario.y + mario.height >= enemy.y - 4;
+              } else {
+                // Standard jumping logic for other enemies
+                jumpedOnEnemy = mario.y < enemy.y;
+              }
+            }
+
+            if (jumpedOnEnemy) {
               // Mario jumped on enemy
               if (enemy.type === "bowser") {
                 // Boss takes multiple hits
@@ -3028,6 +3135,9 @@
         ctx.save();
         ctx.translate(-cameraX, 0);
 
+        // Draw Bowser's Castle (background structure)
+        drawCastle();
+
         // Draw platforms
         platforms.forEach((platform) => {
           drawPlatform(platform);
@@ -3121,9 +3231,10 @@
         // Show boss warning and health when boss area is near
         const boss = enemies.find((e) => e.type === "bowser" && e.alive);
         if (boss) {
-          if (mario.x > 1000 && mario.x < boss.x - 100) {
+          // Show castle warning when approaching (castle is at x: 2400, boss at x: 2550)
+          if (mario.x > 1800 && mario.x < castle.x - 100) {
             document.getElementById("boss-warning").style.display = "block";
-          } else if (mario.x > boss.x - 200) {
+          } else if (mario.x > castle.x - 100) {
             document.getElementById("boss-warning").style.display = "none";
             document.getElementById("boss-health").style.display = "block";
           }
@@ -3143,6 +3254,146 @@
           ctx.arc(x + 50, y, 20, 0, Math.PI * 2);
           ctx.fill();
         }
+      }
+
+      // Draw Bowser's Castle
+      function drawCastle() {
+        const castleX = castle.x;
+        const castleY = castle.y;
+        const castleWidth = castle.width;
+        const castleHeight = castle.height;
+
+        // Main castle body - dark stone gray
+        ctx.fillStyle = "#4A4A4A";
+        ctx.fillRect(castleX, castleY, castleWidth, castleHeight);
+
+        // Castle wall pattern - darker stones
+        ctx.strokeStyle = "#2F2F2F";
+        ctx.lineWidth = 2;
+        for (let row = 0; row < 10; row++) {
+          for (let col = 0; col < 8; col++) {
+            const x = castleX + col * 50;
+            const y = castleY + row * 30;
+            ctx.strokeRect(x, y, 50, 30);
+          }
+        }
+
+        // Draw towers
+        castle.towers.forEach((tower, index) => {
+          // Tower body - slightly lighter gray
+          ctx.fillStyle = "#555555";
+          ctx.fillRect(tower.x, tower.y, tower.width, tower.height);
+
+          // Tower stone pattern
+          ctx.strokeStyle = "#333333";
+          ctx.lineWidth = 2;
+          for (let row = 0; row < 12; row++) {
+            ctx.strokeRect(tower.x, tower.y + row * 30, tower.width, 30);
+          }
+
+          // Tower battlements (castle top decorations)
+          ctx.fillStyle = "#666666";
+          for (let i = 0; i < 4; i++) {
+            ctx.fillRect(tower.x + i * 20, tower.y - 10, 15, 10);
+          }
+
+          // Windows - glowing red (ominous)
+          ctx.fillStyle = "#8B0000";
+          const windowY1 = tower.y + 50;
+          const windowY2 = tower.y + 120;
+          const windowY3 = tower.y + 190;
+          const windowX = tower.x + tower.width / 2 - 12;
+
+          ctx.fillRect(windowX, windowY1, 24, 30);
+          ctx.fillRect(windowX, windowY2, 24, 30);
+          ctx.fillRect(windowX, windowY3, 24, 30);
+
+          // Window glow effect
+          ctx.fillStyle = "#FF4500";
+          ctx.globalAlpha = 0.5;
+          ctx.fillRect(windowX + 2, windowY1 + 2, 20, 26);
+          ctx.fillRect(windowX + 2, windowY2 + 2, 20, 26);
+          ctx.fillRect(windowX + 2, windowY3 + 2, 20, 26);
+          ctx.globalAlpha = 1;
+
+          // Window bars
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(windowX + 10, windowY1, 4, 30);
+          ctx.fillRect(windowX + 10, windowY2, 4, 30);
+          ctx.fillRect(windowX + 10, windowY3, 4, 30);
+        });
+
+        // Main castle entrance - large dark archway
+        const entranceWidth = 100;
+        const entranceHeight = 120;
+        const entranceX = castleX + castleWidth / 2 - entranceWidth / 2;
+        const entranceY = castleY + castleHeight - entranceHeight;
+
+        // Archway background - very dark
+        ctx.fillStyle = "#1A1A1A";
+        ctx.fillRect(entranceX, entranceY, entranceWidth, entranceHeight);
+
+        // Archway top (semi-circle effect with rectangles)
+        ctx.fillRect(entranceX + 10, entranceY - 10, 80, 10);
+        ctx.fillRect(entranceX + 20, entranceY - 20, 60, 10);
+        ctx.fillRect(entranceX + 30, entranceY - 25, 40, 10);
+
+        // Entrance border - dark stone
+        ctx.strokeStyle = "#2F2F2F";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(entranceX, entranceY, entranceWidth, entranceHeight);
+
+        // Portcullis (gate) - partially lowered
+        ctx.fillStyle = "#3A3A3A";
+        const gateY = entranceY + 40;
+        for (let i = 0; i < 8; i++) {
+          ctx.fillRect(entranceX + 10 + i * 10, gateY, 6, 80);
+        }
+        // Horizontal bars
+        for (let i = 0; i < 5; i++) {
+          ctx.fillRect(entranceX + 10, gateY + i * 16, 80, 4);
+        }
+
+        // Castle flags on towers
+        castle.flags.forEach((flag, index) => {
+          // Flag pole
+          ctx.fillStyle = "#2F2F2F";
+          ctx.fillRect(flag.x, flag.y, 4, 60);
+
+          // Flag - Bowser's flag (black with red/orange)
+          const flagWave = Math.sin(Date.now() * 0.003 + index) * 3;
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(flag.x + 4, flag.y + 5, 30 + flagWave, 20);
+
+          // Bowser emblem on flag (simplified - red/orange design)
+          ctx.fillStyle = "#FF4500";
+          ctx.fillRect(flag.x + 10, flag.y + 10, 12, 10);
+          ctx.fillStyle = "#8B0000";
+          ctx.fillRect(flag.x + 14, flag.y + 12, 4, 6);
+        });
+
+        // Add some dark clouds/smoke around castle for atmosphere
+        ctx.fillStyle = "rgba(50, 50, 50, 0.3)";
+        ctx.beginPath();
+        ctx.arc(castleX + 100, castleY - 20, 40, 0, Math.PI * 2);
+        ctx.arc(castleX + 150, castleY - 30, 50, 0, Math.PI * 2);
+        ctx.arc(castleX + 250, castleY - 20, 40, 0, Math.PI * 2);
+        ctx.arc(castleX + 300, castleY - 25, 45, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lava moat in front of castle (optional dramatic effect)
+        const moatY = GROUND_LEVEL - 15;
+        const moatX = castleX - 50;
+        ctx.fillStyle = "#FF4500";
+        const lavaAlpha = 0.8 + Math.sin(Date.now() * 0.005) * 0.2;
+        ctx.globalAlpha = lavaAlpha;
+        ctx.fillRect(moatX, moatY, castleWidth + 100, 25);
+
+        // Lava highlights
+        ctx.fillStyle = "#FFD700";
+        ctx.globalAlpha = lavaAlpha * 0.6;
+        ctx.fillRect(moatX + 5, moatY + 3, castleWidth + 90, 6);
+        ctx.globalAlpha = 1;
       }
 
       // Draw platforms

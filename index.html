@@ -1030,6 +1030,11 @@
       let timeLeft = 400;
       let gameLoop;
 
+      // Castle interior system
+      let insideCastle = false;
+      let castleEntranceZone = null; // Will be set in init
+      let showEnterPrompt = false;
+
       // Camera system
       let cameraX = 0;
 
@@ -1046,6 +1051,7 @@
         powerLevel: 0, // 0: small, 1: big, 2: fire
         animationFrame: 0,
         animationTimer: 0,
+        punchCooldown: 0,
       };
 
       // Platforms and level elements
@@ -1200,6 +1206,12 @@
           { x: 2740, y: GROUND_LEVEL - 380 },
         ],
       };
+
+      // Projectiles for punch/shoot mechanic
+      let projectiles = [];
+
+      // Interior castle boss
+      let interiorBoss = null;
 
       // Initial enemies based on difficulty (called after game starts)
       function initializeEnemies() {
@@ -1503,29 +1515,76 @@
 
         handleInput();
         updateMario();
-        updateEnemies();
-        updatePowerUps();
+
+        if (insideCastle) {
+          // Inside castle - different update logic
+          updateProjectiles();
+          updateInteriorBoss();
+          checkInteriorCollisions();
+        } else {
+          // Outside castle - normal game logic
+          updateEnemies();
+          updatePowerUps();
+          updateLava();
+          updateObstacles(); // Update spikes and falling rocks
+          updateBulletBills(); // Update Bullet Bills
+          generateGround(); // Generate infinite ground
+          generatePlatforms(); // Procedural generation
+          updateFlyingPlatforms(); // Update flying platform positions
+          generateEnemies(); // Procedural generation
+          generateObstacles(); // Generate spikes and rocks
+          generateBillBlasters(); // Generate Bill Blasters
+          checkCollisions();
+          checkCastleEntrance(); // Check if player is near castle entrance
+        }
+
         updateParticles();
-        updateLava();
-        updateObstacles(); // Update spikes and falling rocks
-        updateBulletBills(); // Update Bullet Bills
-        generateGround(); // Generate infinite ground
-        generatePlatforms(); // Procedural generation
-        updateFlyingPlatforms(); // Update flying platform positions
-        generateEnemies(); // Procedural generation
-        generateObstacles(); // Generate spikes and rocks
-        generateBillBlasters(); // Generate Bill Blasters
-        checkCollisions();
         render();
 
-        // Camera follow - smooth following for infinite level
-        const targetCameraX = Math.max(0, mario.x - CANVAS_WIDTH / 2);
-        // No max camera limit - infinite scrolling!
-        cameraX = targetCameraX;
+        // Camera follow - smooth following for infinite level (disabled inside castle)
+        if (!insideCastle) {
+          const targetCameraX = Math.max(0, mario.x - CANVAS_WIDTH / 2);
+          cameraX = targetCameraX;
+        } else {
+          cameraX = 0; // Fixed camera inside castle
+        }
       }
 
       // Handle player input
       function handleInput() {
+        // Castle entrance - press E to enter
+        if (keys["KeyE"] && showEnterPrompt && !insideCastle) {
+          enterCastle();
+          keys["KeyE"] = false; // Prevent repeated entry
+        }
+
+        // Exit castle - press E to exit
+        if (
+          keys["KeyE"] &&
+          insideCastle &&
+          interiorBoss &&
+          !interiorBoss.alive
+        ) {
+          exitCastle();
+          keys["KeyE"] = false; // Prevent repeated exit
+        }
+
+        // Punch/Shoot mechanic - press F or Shift
+        if (keys["KeyF"] || keys["ShiftLeft"] || keys["ShiftRight"]) {
+          if (!mario.punchCooldown || mario.punchCooldown <= 0) {
+            shootProjectile();
+            mario.punchCooldown = 30; // 0.5 second cooldown at 60fps
+          }
+          keys["KeyF"] = false;
+          keys["ShiftLeft"] = false;
+          keys["ShiftRight"] = false;
+        }
+
+        // Reduce punch cooldown
+        if (mario.punchCooldown > 0) {
+          mario.punchCooldown--;
+        }
+
         // Horizontal movement
         if (keys["ArrowLeft"] || keys["KeyA"]) {
           mario.velocityX = -MOVE_SPEED;
@@ -1537,7 +1596,7 @@
           mario.velocityX = 0;
         }
 
-        // Jumping
+        // Jumping (enabled everywhere)
         if (
           (keys["Space"] || keys["ArrowUp"] || keys["KeyW"]) &&
           mario.onGround
@@ -1546,6 +1605,88 @@
           mario.onGround = false;
           playJumpSound();
         }
+      }
+
+      // Shoot projectile (punch mechanic)
+      function shootProjectile() {
+        const projectileSpeed = 8;
+        const offsetX = mario.facing === "right" ? mario.width : -16;
+
+        projectiles.push({
+          x: mario.x + offsetX,
+          y: mario.y + mario.height / 2 - 8,
+          width: 16,
+          height: 16,
+          velocityX:
+            mario.facing === "right" ? projectileSpeed : -projectileSpeed,
+          facing: mario.facing,
+          alive: true,
+        });
+
+        // Play shoot sound
+        playJumpSound(); // Reuse jump sound for now
+      }
+
+      // Enter castle
+      function enterCastle() {
+        insideCastle = true;
+        showEnterPrompt = false;
+
+        // Save outdoor position
+        mario.outdoorX = mario.x;
+        mario.outdoorY = mario.y;
+
+        // Move Mario to castle interior start position
+        mario.x = 100;
+        mario.y = GROUND_LEVEL - mario.height;
+        mario.velocityX = 0;
+        mario.velocityY = 0;
+
+        // Initialize interior boss
+        initializeInteriorBoss();
+
+        // Play sound
+        playPowerUpSound();
+      }
+
+      // Exit castle
+      function exitCastle() {
+        insideCastle = false;
+
+        // Restore outdoor position (in front of castle)
+        mario.x = castle.x + castle.width / 2;
+        mario.y = GROUND_LEVEL - mario.height;
+        mario.velocityX = 0;
+        mario.velocityY = 0;
+
+        // Clear interior boss
+        interiorBoss = null;
+
+        // Play sound
+        playPowerUpSound();
+      }
+
+      // Initialize interior boss
+      function initializeInteriorBoss() {
+        const difficulty = getDifficulty();
+        interiorBoss = {
+          x: CANVAS_WIDTH - 200,
+          y: GROUND_LEVEL - 80,
+          width: 80,
+          height: 80,
+          velocityX: 0,
+          velocityY: 0,
+          type: "interior_bowser",
+          alive: true,
+          health:
+            selectedDifficulty === "easy"
+              ? 5
+              : selectedDifficulty === "medium"
+              ? 8
+              : 12,
+          attackTimer: 0,
+          moveTimer: 0,
+        };
       }
 
       // Update Mario
@@ -1608,6 +1749,162 @@
         // Keep Mario in bounds
         if (mario.x < 0) mario.x = 0;
         // No right boundary - infinite level!
+      }
+
+      // Check if player is near castle entrance
+      function checkCastleEntrance() {
+        if (!castle) return;
+
+        const entranceX = castle.x + castle.width / 2 - 50;
+        const entranceY = castle.y + castle.height - 120;
+        const entranceWidth = 100;
+        const entranceHeight = 120;
+
+        // Check if Mario is near the entrance and Bowser is defeated
+        const nearEntrance =
+          mario.x + mario.width > entranceX &&
+          mario.x < entranceX + entranceWidth &&
+          mario.y + mario.height > entranceY &&
+          mario.y < entranceY + entranceHeight;
+
+        const bowserDefeated = !enemies.some(
+          (e) => e.type === "bowser" && e.alive
+        );
+
+        showEnterPrompt = nearEntrance && bowserDefeated;
+      }
+
+      // Update projectiles
+      function updateProjectiles() {
+        projectiles.forEach((projectile, index) => {
+          if (!projectile.alive) {
+            projectiles.splice(index, 1);
+            return;
+          }
+
+          projectile.x += projectile.velocityX;
+
+          // Remove if off screen
+          if (projectile.x < -50 || projectile.x > CANVAS_WIDTH + 50) {
+            projectiles.splice(index, 1);
+          }
+        });
+      }
+
+      // Update interior boss
+      function updateInteriorBoss() {
+        if (!interiorBoss || !interiorBoss.alive) return;
+
+        const boss = interiorBoss;
+
+        // Move timer for simple movement pattern
+        boss.moveTimer++;
+        if (boss.moveTimer < 120) {
+          boss.velocityX = 2;
+        } else if (boss.moveTimer < 240) {
+          boss.velocityX = -2;
+        } else {
+          boss.moveTimer = 0;
+        }
+
+        boss.x += boss.velocityX;
+
+        // Keep boss in bounds
+        if (boss.x < CANVAS_WIDTH / 2) boss.x = CANVAS_WIDTH / 2;
+        if (boss.x + boss.width > CANVAS_WIDTH - 50)
+          boss.x = CANVAS_WIDTH - 50 - boss.width;
+
+        // Attack timer - boss shoots fireballs
+        boss.attackTimer++;
+        if (boss.attackTimer > 90) {
+          // Attack every 1.5 seconds
+          boss.attackTimer = 0;
+
+          // Shoot fireball at Mario
+          const fireballSpeed = 4;
+          const dx = mario.x - boss.x;
+          const dy = mario.y - boss.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          projectiles.push({
+            x: boss.x + boss.width / 2,
+            y: boss.y + boss.height / 2,
+            width: 20,
+            height: 20,
+            velocityX: (dx / distance) * fireballSpeed,
+            velocityY: (dy / distance) * fireballSpeed,
+            facing: dx > 0 ? "right" : "left",
+            alive: true,
+            enemy: true, // Mark as enemy projectile
+          });
+
+          playBreakSound();
+        }
+      }
+
+      // Check collisions inside castle
+      function checkInteriorCollisions() {
+        if (!interiorBoss || !interiorBoss.alive) return;
+
+        // Player projectiles vs boss
+        projectiles.forEach((projectile, index) => {
+          if (projectile.enemy) return; // Skip enemy projectiles
+
+          if (checkCollision(projectile, interiorBoss)) {
+            projectile.alive = false;
+            projectiles.splice(index, 1);
+
+            interiorBoss.health--;
+            score += 500;
+            playBreakSound();
+
+            // Create hit particles
+            for (let i = 0; i < 10; i++) {
+              particles.push({
+                x: projectile.x,
+                y: projectile.y,
+                velocityX: (Math.random() - 0.5) * 6,
+                velocityY: (Math.random() - 0.5) * 6,
+                life: 20,
+                color: "#FF4500",
+                size: 4 + Math.random() * 4,
+              });
+            }
+
+            if (interiorBoss.health <= 0) {
+              interiorBoss.alive = false;
+              score += 10000;
+              playPowerUpSound();
+
+              // Victory particles
+              for (let i = 0; i < 50; i++) {
+                particles.push({
+                  x: interiorBoss.x + interiorBoss.width / 2,
+                  y: interiorBoss.y + interiorBoss.height / 2,
+                  velocityX: (Math.random() - 0.5) * 10,
+                  velocityY: (Math.random() - 0.5) * 10,
+                  life: 40,
+                  color: ["#FFD700", "#FF4500", "#00FF00"][
+                    Math.floor(Math.random() * 3)
+                  ],
+                  size: 6 + Math.random() * 6,
+                });
+              }
+            }
+          }
+        });
+
+        // Enemy projectiles vs Mario
+        projectiles.forEach((projectile, index) => {
+          if (!projectile.enemy) return; // Skip player projectiles
+
+          if (checkCollision(projectile, mario)) {
+            projectile.alive = false;
+            projectiles.splice(index, 1);
+            loseLife();
+            playBreakSound();
+          }
+        });
       }
 
       // Update enemies
@@ -2285,10 +2582,9 @@
             let jumpedOnEnemy = false;
             if (mario.velocityY > 0) {
               if (enemy.type === "dragon") {
-                // Dragon jumping is more lenient - Mario can jump on entire width + threshold
+                // Dragon jumping is very lenient - if falling on dragon from above, it counts as a kill
                 jumpedOnEnemy =
-                  mario.y + mario.height <= enemy.y + enemy.height + 8 &&
-                  mario.y + mario.height >= enemy.y - 4;
+                  mario.y + mario.height * 0.5 < enemy.y + enemy.height;
               } else {
                 // Standard jumping logic for other enemies
                 jumpedOnEnemy = mario.y < enemy.y;
@@ -3121,6 +3417,57 @@
         // Clear canvas
         ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+        if (insideCastle) {
+          // Draw castle interior
+          drawCastleInterior();
+
+          // Draw projectiles
+          projectiles.forEach((projectile) => {
+            drawProjectile(projectile);
+          });
+
+          // Draw interior boss
+          if (interiorBoss && interiorBoss.alive) {
+            drawInteriorBoss(interiorBoss);
+          }
+
+          // Draw particles
+          particles.forEach((particle) => {
+            ctx.fillStyle = particle.color;
+            ctx.globalAlpha = particle.life / 30;
+            ctx.fillRect(
+              particle.x - particle.size / 2,
+              particle.y - particle.size / 2,
+              particle.size,
+              particle.size
+            );
+            ctx.globalAlpha = 1;
+          });
+
+          // Draw Player
+          drawPlayer();
+
+          // Update UI
+          document.getElementById("score").textContent = score;
+
+          // Show boss health inside castle
+          if (interiorBoss && interiorBoss.alive) {
+            document.getElementById("boss-health-value").textContent =
+              interiorBoss.health;
+            document.getElementById("boss-health").style.display = "block";
+          } else if (interiorBoss && !interiorBoss.alive) {
+            document.getElementById("boss-health").style.display = "none";
+            // Show exit prompt
+            ctx.fillStyle = "#FFD700";
+            ctx.font = "bold 20px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("Press E to Exit Castle", CANVAS_WIDTH / 2, 50);
+          }
+
+          return; // Skip outdoor rendering
+        }
+
+        // OUTDOOR RENDERING
         // Draw background (doesn't move with camera)
         ctx.fillStyle = "#87ceeb";
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -3238,6 +3585,16 @@
             document.getElementById("boss-warning").style.display = "none";
             document.getElementById("boss-health").style.display = "block";
           }
+        }
+
+        // Show entrance prompt when near castle entrance
+        if (showEnterPrompt) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+          ctx.fillRect(CANVAS_WIDTH / 2 - 150, 40, 300, 50);
+          ctx.fillStyle = "#FFD700";
+          ctx.font = "bold 18px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("Press E to Enter Castle", CANVAS_WIDTH / 2, 70);
         }
       }
 
@@ -3394,6 +3751,273 @@
         ctx.globalAlpha = lavaAlpha * 0.6;
         ctx.fillRect(moatX + 5, moatY + 3, castleWidth + 90, 6);
         ctx.globalAlpha = 1;
+      }
+
+      // Draw castle interior
+      function drawCastleInterior() {
+        // Dark throne room background
+        ctx.fillStyle = "#1A1A1A";
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        // Stone floor
+        ctx.fillStyle = "#2F2F2F";
+        ctx.fillRect(
+          0,
+          GROUND_LEVEL,
+          CANVAS_WIDTH,
+          CANVAS_HEIGHT - GROUND_LEVEL
+        );
+
+        // Floor tiles
+        ctx.strokeStyle = "#1A1A1A";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < CANVAS_WIDTH / 50; i++) {
+          for (let j = 0; j < 5; j++) {
+            ctx.strokeRect(i * 50, GROUND_LEVEL + j * 50, 50, 50);
+          }
+        }
+
+        // Wall torches (flickering light)
+        const flicker = Math.sin(Date.now() * 0.01) * 0.2 + 0.8;
+        const torchPositions = [100, 300, 500, 700];
+        torchPositions.forEach((x) => {
+          // Torch holder
+          ctx.fillStyle = "#4A4A4A";
+          ctx.fillRect(x - 5, 150, 10, 40);
+
+          // Flame
+          ctx.fillStyle = "#FF4500";
+          ctx.globalAlpha = flicker;
+          ctx.fillRect(x - 8, 140, 16, 12);
+          ctx.fillStyle = "#FFD700";
+          ctx.fillRect(x - 5, 142, 10, 8);
+          ctx.globalAlpha = 1;
+
+          // Glow
+          const gradient = ctx.createRadialGradient(x, 145, 0, x, 145, 60);
+          gradient.addColorStop(0, "rgba(255, 100, 0, 0.3)");
+          gradient.addColorStop(1, "rgba(255, 100, 0, 0)");
+          ctx.fillStyle = gradient;
+          ctx.globalAlpha = flicker * 0.5;
+          ctx.fillRect(x - 60, 85, 120, 120);
+          ctx.globalAlpha = 1;
+        });
+
+        // Pillars
+        const pillarX = [50, CANVAS_WIDTH - 100];
+        pillarX.forEach((x) => {
+          ctx.fillStyle = "#3A3A3A";
+          ctx.fillRect(x, 200, 50, GROUND_LEVEL - 200);
+
+          // Pillar details
+          ctx.strokeStyle = "#2A2A2A";
+          ctx.lineWidth = 3;
+          for (let i = 0; i < 5; i++) {
+            ctx.strokeRect(x, 200 + i * 80, 50, 80);
+          }
+        });
+
+        // Throne at the back
+        const throneX = CANVAS_WIDTH - 150;
+        const throneY = GROUND_LEVEL - 60;
+        ctx.fillStyle = "#4A4A4A";
+        // Throne base
+        ctx.fillRect(throneX, throneY + 40, 60, 20);
+        // Throne back
+        ctx.fillRect(throneX + 10, throneY, 40, 50);
+        // Throne spikes
+        ctx.fillStyle = "#FFD700";
+        for (let i = 0; i < 3; i++) {
+          ctx.fillRect(throneX + 15 + i * 10, throneY - 10, 5, 10);
+        }
+
+        // Ominous text at top
+        ctx.fillStyle = "#8B0000";
+        ctx.font = "bold 24px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("BOWSER'S THRONE ROOM", CANVAS_WIDTH / 2, 40);
+
+        // Boss health bar
+        if (interiorBoss && interiorBoss.alive) {
+          const maxHealth =
+            selectedDifficulty === "easy"
+              ? 5
+              : selectedDifficulty === "medium"
+              ? 8
+              : 12;
+          const healthPercent = interiorBoss.health / maxHealth;
+
+          ctx.fillStyle = "#333";
+          ctx.fillRect(CANVAS_WIDTH / 2 - 150, 60, 300, 20);
+          ctx.fillStyle =
+            healthPercent > 0.5
+              ? "#00FF00"
+              : healthPercent > 0.25
+              ? "#FFD700"
+              : "#FF0000";
+          ctx.fillRect(CANVAS_WIDTH / 2 - 148, 62, 296 * healthPercent, 16);
+          ctx.strokeStyle = "#FFF";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(CANVAS_WIDTH / 2 - 150, 60, 300, 20);
+        }
+
+        // Controls hint
+        ctx.fillStyle = "#AAAAAA";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText(
+          "Controls: A/D = Move  |  F/Shift = Shoot",
+          10,
+          CANVAS_HEIGHT - 10
+        );
+      }
+
+      // Draw projectile
+      function drawProjectile(projectile) {
+        if (projectile.enemy) {
+          // Enemy fireball - red/orange
+          const time = Date.now() * 0.02;
+          const flameSize = 4 + Math.sin(time) * 2;
+          ctx.fillStyle = "#FF4500";
+          ctx.fillRect(
+            projectile.x,
+            projectile.y,
+            projectile.width,
+            projectile.height
+          );
+          ctx.fillStyle = "#FFD700";
+          ctx.fillRect(
+            projectile.x + 4,
+            projectile.y + 4,
+            projectile.width - 8,
+            projectile.height - 8
+          );
+
+          // Flame trail
+          ctx.fillStyle = "#FF4500";
+          ctx.globalAlpha = 0.5;
+          ctx.fillRect(
+            projectile.x - flameSize,
+            projectile.y + projectile.height / 2 - flameSize / 2,
+            flameSize,
+            flameSize
+          );
+          ctx.globalAlpha = 1;
+        } else {
+          // Player punch/energy blast - blue/white
+          ctx.fillStyle = "#0066FF";
+          ctx.fillRect(
+            projectile.x,
+            projectile.y,
+            projectile.width,
+            projectile.height
+          );
+          ctx.fillStyle = "#87CEEB";
+          ctx.fillRect(
+            projectile.x + 3,
+            projectile.y + 3,
+            projectile.width - 6,
+            projectile.height - 6
+          );
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(
+            projectile.x + 6,
+            projectile.y + 6,
+            projectile.width - 12,
+            projectile.height - 12
+          );
+
+          // Glow effect
+          ctx.strokeStyle = "#87CEEB";
+          ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.5;
+          ctx.strokeRect(
+            projectile.x - 2,
+            projectile.y - 2,
+            projectile.width + 4,
+            projectile.height + 4
+          );
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      // Draw interior boss
+      function drawInteriorBoss(boss) {
+        // Giant Bowser - more menacing interior version
+        const x = boss.x;
+        const y = boss.y;
+        const w = boss.width;
+        const h = boss.height;
+
+        // Body - dark red
+        ctx.fillStyle = "#8B0000";
+        ctx.fillRect(x + w * 0.1, y + h * 0.3, w * 0.8, h * 0.5);
+
+        // Shell with spikes
+        ctx.fillStyle = "#654321";
+        ctx.fillRect(x + w * 0.15, y + h * 0.2, w * 0.7, h * 0.3);
+        // Spikes
+        ctx.fillStyle = "#DC143C";
+        for (let i = 0; i < 7; i++) {
+          ctx.fillRect(
+            x + w * 0.2 + i * w * 0.1,
+            y + h * 0.15,
+            w * 0.05,
+            h * 0.1
+          );
+        }
+
+        // Head - large and menacing
+        ctx.fillStyle = "#8B0000";
+        ctx.fillRect(x + w * 0.2, y, w * 0.6, h * 0.3);
+
+        // Horns - golden yellow
+        ctx.fillStyle = "#FFD700";
+        ctx.fillRect(x + w * 0.15, y - h * 0.05, w * 0.08, h * 0.1);
+        ctx.fillRect(x + w * 0.77, y - h * 0.05, w * 0.08, h * 0.1);
+
+        // Eyes - glowing red (menacing)
+        ctx.fillStyle = "#FF0000";
+        ctx.fillRect(x + w * 0.3, y + h * 0.08, w * 0.08, h * 0.08);
+        ctx.fillRect(x + w * 0.62, y + h * 0.08, w * 0.08, h * 0.08);
+        ctx.fillStyle = "#FFFF00";
+        ctx.globalAlpha = 0.7;
+        ctx.fillRect(x + w * 0.32, y + h * 0.1, w * 0.04, h * 0.04);
+        ctx.fillRect(x + w * 0.64, y + h * 0.1, w * 0.04, h * 0.04);
+        ctx.globalAlpha = 1;
+
+        // Angry eyebrows
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x + w * 0.28, y + h * 0.03, w * 0.12, h * 0.03);
+        ctx.fillRect(x + w * 0.6, y + h * 0.03, w * 0.12, h * 0.03);
+
+        // Fangs - white and sharp
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(x + w * 0.35, y + h * 0.2, w * 0.05, h * 0.08);
+        ctx.fillRect(x + w * 0.6, y + h * 0.2, w * 0.05, h * 0.08);
+
+        // Arms
+        ctx.fillStyle = "#8B0000";
+        ctx.fillRect(x, y + h * 0.25, w * 0.15, h * 0.1);
+        ctx.fillRect(x + w * 0.85, y + h * 0.25, w * 0.15, h * 0.1);
+
+        // Legs
+        ctx.fillRect(x + w * 0.15, y + h * 0.7, w * 0.15, h * 0.1);
+        ctx.fillRect(x + w * 0.7, y + h * 0.7, w * 0.15, h * 0.1);
+
+        // Claws - black
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(x - w * 0.02, y + h * 0.3, w * 0.05, h * 0.05);
+        ctx.fillRect(x + w * 0.97, y + h * 0.3, w * 0.05, h * 0.05);
+
+        // Fire breath indicator when attacking
+        if (boss.attackTimer > 80) {
+          ctx.fillStyle = "#FF4500";
+          ctx.globalAlpha = 0.7;
+          const breathSize = (90 - boss.attackTimer) * 3;
+          ctx.fillRect(x + w * 0.45, y + h * 0.22, breathSize, h * 0.08);
+          ctx.globalAlpha = 1;
+        }
       }
 
       // Draw platforms

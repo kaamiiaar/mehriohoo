@@ -403,13 +403,14 @@
       /* Touch Controls for Mobile/iPad */
       #touch-controls {
         position: fixed;
-        bottom: 40px;
+        bottom: 20px;
         left: 0;
         right: 0;
         width: 100%;
         display: none; /* Hidden by default, shown when game starts */
-        justify-content: space-between;
-        padding: 0 30px;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
         z-index: 2000;
         pointer-events: none;
       }
@@ -443,10 +444,40 @@
         border-color: #ffcc00;
       }
 
+      .top-controls {
+        display: flex;
+        gap: 20px;
+        pointer-events: none;
+        margin-bottom: 10px;
+      }
+
+      .bottom-controls {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 400px;
+        padding: 0 30px;
+        pointer-events: none;
+      }
+
       .left-controls {
         display: flex;
         gap: 15px;
         pointer-events: none;
+      }
+
+      .action-button {
+        width: 100px;
+        height: 50px;
+        font-size: 16px;
+        border-radius: 15px;
+        background-color: rgba(100, 100, 255, 0.8);
+        border-color: #6666ff;
+      }
+
+      .action-button:active {
+        background-color: rgba(150, 150, 255, 0.9);
+        border-color: #9999ff;
       }
 
       #jump-button {
@@ -521,7 +552,22 @@
 
         #touch-controls {
           bottom: 20px;
+          gap: 8px;
+        }
+
+        .top-controls {
+          gap: 15px;
+        }
+
+        .bottom-controls {
           padding: 0 20px;
+          max-width: 380px;
+        }
+
+        .action-button {
+          width: 90px;
+          height: 45px;
+          font-size: 14px;
         }
 
         #audio-message {
@@ -746,11 +792,19 @@
 
       <!-- Touch Controls for Mobile/iPad -->
       <div id="touch-controls">
-        <div class="left-controls">
-          <div id="left-button" class="touch-button">←</div>
-          <div id="right-button" class="touch-button">→</div>
+        <div class="top-controls">
+          <div id="enter-castle-button" class="touch-button action-button">
+            ENTER
+          </div>
+          <div id="shoot-button" class="touch-button action-button">SHOOT</div>
         </div>
-        <div id="jump-button" class="touch-button">JUMP</div>
+        <div class="bottom-controls">
+          <div class="left-controls">
+            <div id="left-button" class="touch-button">←</div>
+            <div id="right-button" class="touch-button">→</div>
+          </div>
+          <div id="jump-button" class="touch-button">JUMP</div>
+        </div>
       </div>
     </div>
 
@@ -2832,6 +2886,10 @@
         const leftButton = document.getElementById("left-button");
         const rightButton = document.getElementById("right-button");
         const jumpButton = document.getElementById("jump-button");
+        const enterCastleButton = document.getElementById(
+          "enter-castle-button"
+        );
+        const shootButton = document.getElementById("shoot-button");
 
         // Touch/mouse events for left movement
         leftButton.addEventListener("touchstart", (e) => {
@@ -2897,8 +2955,50 @@
           keys["KeyW"] = false;
         });
 
+        // Touch/mouse events for enter castle
+        enterCastleButton.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          keys["KeyE"] = true;
+        });
+        enterCastleButton.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          keys["KeyE"] = false;
+        });
+        enterCastleButton.addEventListener("mousedown", () => {
+          keys["KeyE"] = true;
+        });
+        enterCastleButton.addEventListener("mouseup", () => {
+          keys["KeyE"] = false;
+        });
+
+        // Touch/mouse events for shoot
+        shootButton.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          keys["KeyF"] = true;
+          keys["ShiftLeft"] = true;
+        });
+        shootButton.addEventListener("touchend", (e) => {
+          e.preventDefault();
+          keys["KeyF"] = false;
+          keys["ShiftLeft"] = false;
+        });
+        shootButton.addEventListener("mousedown", () => {
+          keys["KeyF"] = true;
+          keys["ShiftLeft"] = true;
+        });
+        shootButton.addEventListener("mouseup", () => {
+          keys["KeyF"] = false;
+          keys["ShiftLeft"] = false;
+        });
+
         // Prevent default touch behaviors on buttons
-        [leftButton, rightButton, jumpButton].forEach((button) => {
+        [
+          leftButton,
+          rightButton,
+          jumpButton,
+          enterCastleButton,
+          shootButton,
+        ].forEach((button) => {
           button.addEventListener("touchstart", (e) => e.preventDefault(), {
             passive: false,
           });
